@@ -1,0 +1,7 @@
+pyspark==3.4.4
+flask
+mlflow
+pandas
+numpy
+scikit-learn
+gunicorn

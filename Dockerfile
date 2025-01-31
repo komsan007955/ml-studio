@@ -5,12 +5,12 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    openjdk-11-jdk \
+    openjdk-17-jdk \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Spark
-ENV SPARK_VERSION=3.3.3
+ENV SPARK_VERSION=3.4.4
 RUN curl -fsSL "https://downloads.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz" | tar -xz -C /opt/
 ENV SPARK_HOME=/opt/spark-${SPARK_VERSION}-bin-hadoop3
 ENV PATH=$SPARK_HOME/bin:$PATH
