@@ -19,7 +19,12 @@ ENV PATH=$SPARK_HOME/bin:$PATH
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
+# Copy all project files into the container
+COPY . .
+
 # Expose ports (MLflow, Flask, Spark UI)
 EXPOSE 5000 5001 4040 8080
 
-CMD ["bash"]
+# Start MLflow server by default
+CMD nohup mlflow server --host 0.0.0.0 --port 5001 --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns > mlflow.log 2>&1 & \
+    python mlflow/mlflow_server.py
