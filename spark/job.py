@@ -4,5 +4,5 @@ from pyspark.sql import SparkSession
 spark = SparkSession.builder.appName("ML Studio Job").getOrCreate()
 
 # Load example dataset
-df = spark.read.csv("data/example.csv", header=True, inferSchema=True)
+df = spark.read.csv("/app/data/example.csv", header=True, inferSchema=True)
 df.show()
