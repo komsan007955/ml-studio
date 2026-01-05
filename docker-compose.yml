@@ -1,0 +1,36 @@
+services:
+  # The Flask App
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      MYSQL_HOST: db 
+      MYSQL_USER: blendata
+      MYSQL_PASSWORD: "l;ylfu=k;F]d1"
+      MYSQL_DATABASE: auth
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # The MySQL Database
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "l;ylfu=k;F]d1"
+      MYSQL_DATABASE: auth
+      MYSQL_USER: blendata
+      MYSQL_PASSWORD: "l;ylfu=k;F]d1"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_data:
