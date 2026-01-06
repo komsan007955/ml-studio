@@ -7,6 +7,16 @@ app = Flask(__name__)
 
 create_table_queries = [
     (
+        "user", 
+        """
+            CREATE TABLE IF NOT EXISTS user (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_name VARCHAR(20),
+                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """
+    ),
+    (
         "component", 
         """
             CREATE TABLE IF NOT EXISTS component (
@@ -35,6 +45,59 @@ create_table_queries = [
                 CONSTRAINT component_fk
                     FOREIGN KEY (component_id)
                     REFERENCES component(id)
+            )
+        """
+    ), 
+    (
+        "operation",
+        """
+            CREATE TABLE IF NOT EXISTS operation (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                ref_name VARCHAR(20),
+                name VARCHAR(20),
+                description VARCHAR(500),
+                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_by VARCHAR(20),
+                modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                modified_by VARCHAR(20),
+                version INT,
+                app_id INT
+            )
+        """
+    ),
+    (
+        "permission",
+        """
+            CREATE TABLE IF NOT EXISTS permission (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                elem_id INT,
+                operation_id INT,
+                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_by VARCHAR(20),
+                CONSTRAINT elem_fk
+                    FOREIGN KEY (elem_id)
+                    REFERENCES element(id),
+                CONSTRAINT operation_fk
+                    FOREIGN KEY (operation_id)
+                    REFERENCES operation(id)
+            )
+        """
+    ),
+    (
+        "user_permission",
+        """
+            CREATE TABLE IF NOT EXISTS user_permission (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT,
+                permission_id INT,
+                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_by VARCHAR(20),
+                CONSTRAINT user_fk
+                    FOREIGN KEY (user_id)
+                    REFERENCES user(id),
+                CONSTRAINT permission_fk
+                    FOREIGN KEY (permission_id)
+                    REFERENCES permission(id)
             )
         """
     )
@@ -78,7 +141,7 @@ def index():
         cursor.close()
         conn.close()
         return f"Connected to database: {db_name[0]}"
-    
+
     except Exception as e:
         return f"Connection failed: {str(e)}"
 
