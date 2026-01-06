@@ -2,6 +2,7 @@ services:
   # The Flask App
   web:
     build: .
+    image: cerberus-api
     ports:
       - "5000:5000"
     environment:
@@ -15,7 +16,8 @@ services:
 
   # The MySQL Database
   db:
-    image: mysql:8.0
+    image: cerberus-db
+    build: .
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: "l;ylfu=k;F]d1"
