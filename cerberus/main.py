@@ -74,7 +74,6 @@ create_table_queries = [
             operation_id INT,
             created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_by VARCHAR(20),
-            UNIQUE(elem_id, operation_id),
             CONSTRAINT elem_fk
                 FOREIGN KEY (elem_id)
                 REFERENCES element(id),
@@ -110,15 +109,14 @@ insert_row_queries = [
     ("operation", "INSERT IGNORE INTO operation (name) VALUE ('view'), ('edit'), ('manage')")
 ]
 
-def get_db_connection():
-    conn = mysql.connector.connect(
-        host=os.getenv("MYSQL_HOST", "cerberus"),
-        user=os.getenv("MYSQL_USER", "blendata"),
-        password=os.getenv("MYSQL_PASSWORD", "l;ylfu=k;F]d1"),
-        database=os.getenv("MYSQL_DATABASE", "auth")
-    )
+db_pool = None
 
-    return conn
+def get_db_connection():
+    global db_pool
+    if db_pool is None:
+        raise Exception("Database pool not initialized!")
+    
+    return db_pool.get_connection()
 
 def setup_database(conn):
     try:
@@ -169,22 +167,37 @@ def index():
 if __name__ == "__main__":
     max_retries = 10
     delay = 5
-    conn = None
-
-    print("Connecting to database...")
+    
+    print("Waiting for database to be ready...")
     for i in range(max_retries):
         try:
-            conn = get_db_connection()
-            print("Connected successfully!")
+            db_pool = mysql.connector.pooling.MySQLConnectionPool(
+                pool_name="cerberus_pool",
+                pool_size=5, 
+                host=os.getenv("MYSQL_HOST", "db"),
+                user=os.getenv("MYSQL_USER", "blendata"),
+                password=os.getenv("MYSQL_PASSWORD", "l;ylfu=k;F]d1"),
+                database=os.getenv("MYSQL_DATABASE", "auth")
+            )
+
+            print("Database pool created successfully!")
             break
+
         except mysql.connector.Error as err:
-            print(f"Connection attempt {i+1} failed. Retrying in {delay}s...")
+            print(f"Database not ready (Attempt {i+1}/{max_retries})...")
             time.sleep(delay)
     
-    try:
-        setup_database(conn)
-        setup_tables(conn)
-    finally:
-        conn.close()
+    if db_pool:
+        conn = get_db_connection()
+        try:
+            setup_database(conn)
+            setup_tables(conn)
+        
+        finally:
+            conn.close()
 
-    app.run(host="0.0.0.0", port=5000)
+        print("Starting Flask app...")
+        app.run(host="0.0.0.0", port=5000)
+    
+    else:
+        print("CRITICAL: Could not initialize database pool. Exiting.")
