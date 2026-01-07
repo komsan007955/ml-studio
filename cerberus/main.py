@@ -9,98 +9,105 @@ create_table_queries = [
     (
         "user", 
         """
-            CREATE TABLE IF NOT EXISTS user (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_name VARCHAR(20),
-                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+        CREATE TABLE IF NOT EXISTS user (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(20) UNIQUE,
+            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
         """
     ),
     (
         "component", 
         """
-            CREATE TABLE IF NOT EXISTS component (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                component_name VARCHAR(20),
-                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+        CREATE TABLE IF NOT EXISTS component (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(20) UNIQUE,
+            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
         """
     ),  
     (
         "element", 
         """
-            CREATE TABLE IF NOT EXISTS element (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                component_id INT,
-                ref_name VARCHAR(100),
-                elem_name VARCHAR(100),
-                description VARCHAR(500),
-                parent INT,
-                ancestor VARCHAR(100),
-                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                created_by VARCHAR(20),
-                modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                modified_by VARCHAR(20),
-                version INT,
-                CONSTRAINT component_fk
-                    FOREIGN KEY (component_id)
-                    REFERENCES component(id)
-            )
+        CREATE TABLE IF NOT EXISTS element (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            component_id INT,
+            ref_name VARCHAR(100),
+            elem_name VARCHAR(100),
+            description VARCHAR(500),
+            parent INT,
+            ancestor VARCHAR(100),
+            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by VARCHAR(20),
+            modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            modified_by VARCHAR(20),
+            version INT,
+            CONSTRAINT component_fk
+                FOREIGN KEY (component_id)
+                REFERENCES component(id)
+        )
         """
     ), 
     (
         "operation",
         """
-            CREATE TABLE IF NOT EXISTS operation (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                ref_name VARCHAR(20),
-                name VARCHAR(20),
-                description VARCHAR(500),
-                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                created_by VARCHAR(20),
-                modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                modified_by VARCHAR(20),
-                version INT,
-                app_id INT
-            )
+        CREATE TABLE IF NOT EXISTS operation (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            ref_name VARCHAR(20),
+            name VARCHAR(20) UNIQUE,
+            description VARCHAR(500),
+            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by VARCHAR(20),
+            modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            modified_by VARCHAR(20),
+            version INT,
+            app_id INT
+        )
         """
     ),
     (
         "permission",
         """
-            CREATE TABLE IF NOT EXISTS permission (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                elem_id INT,
-                operation_id INT,
-                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                created_by VARCHAR(20),
-                CONSTRAINT elem_fk
-                    FOREIGN KEY (elem_id)
-                    REFERENCES element(id),
-                CONSTRAINT operation_fk
-                    FOREIGN KEY (operation_id)
-                    REFERENCES operation(id)
-            )
+        CREATE TABLE IF NOT EXISTS permission (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            elem_id INT,
+            operation_id INT,
+            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by VARCHAR(20),
+            UNIQUE(elem_id, operation_id),
+            CONSTRAINT elem_fk
+                FOREIGN KEY (elem_id)
+                REFERENCES element(id),
+            CONSTRAINT operation_fk
+                FOREIGN KEY (operation_id)
+                REFERENCES operation(id)
+        )
         """
     ),
     (
         "user_permission",
         """
-            CREATE TABLE IF NOT EXISTS user_permission (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id INT,
-                permission_id INT,
-                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                created_by VARCHAR(20),
-                CONSTRAINT user_fk
-                    FOREIGN KEY (user_id)
-                    REFERENCES user(id),
-                CONSTRAINT permission_fk
-                    FOREIGN KEY (permission_id)
-                    REFERENCES permission(id)
-            )
+        CREATE TABLE IF NOT EXISTS user_permission (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT,
+            permission_id INT,
+            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by VARCHAR(20),
+            CONSTRAINT user_fk
+                FOREIGN KEY (user_id)
+                REFERENCES user(id),
+            CONSTRAINT permission_fk
+                FOREIGN KEY (permission_id)
+                REFERENCES permission(id)
+        )
         """
     )
+]
+
+insert_row_queries = [
+    ("user", "INSERT IGNORE INTO user (name) VALUE ('komsan')"), 
+    ("component", "INSERT IGNORE INTO component (name) VALUE ('experiment'), ('model')"), 
+    ("operation", "INSERT IGNORE INTO operation (name) VALUE ('view'), ('edit'), ('manage')")
 ]
 
 def get_db_connection():
@@ -113,9 +120,8 @@ def get_db_connection():
 
     return conn
 
-def setup_database():
+def setup_database(conn):
     try:
-        conn = get_db_connection()
         cursor = conn.cursor()
 
         for table_name, query in create_table_queries:
@@ -129,7 +135,22 @@ def setup_database():
     
     finally:
         if "cursor" in locals(): cursor.close()
-        if "conn" in locals(): conn.close()
+
+def setup_tables(conn):
+    try:
+        cursor = conn.cursor()
+
+        for table_name, query in insert_row_queries:
+            cursor.execute(query)
+            print(f"Rows added into \"{table_name}\".")
+        
+        conn.commit()
+    
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+    
+    finally:
+        if "cursor" in locals(): cursor.close()
 
 @app.route("/")
 def index():
@@ -146,6 +167,24 @@ def index():
         return f"Connection failed: {str(e)}"
 
 if __name__ == "__main__":
-    time.sleep(2) 
-    setup_database()
+    max_retries = 10
+    delay = 5
+    conn = None
+
+    print("Connecting to database...")
+    for i in range(max_retries):
+        try:
+            conn = get_db_connection()
+            print("Connected successfully!")
+            break
+        except mysql.connector.Error as err:
+            print(f"Connection attempt {i+1} failed. Retrying in {delay}s...")
+            time.sleep(delay)
+    
+    try:
+        setup_database(conn)
+        setup_tables(conn)
+    finally:
+        conn.close()
+
     app.run(host="0.0.0.0", port=5000)
