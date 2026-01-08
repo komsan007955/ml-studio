@@ -111,12 +111,14 @@ insert_row_queries = [
 
 db_pool = None
 
+
 def get_db_connection():
     global db_pool
     if db_pool is None:
         raise Exception("Database pool not initialized!")
     
     return db_pool.get_connection()
+
 
 def setup_database(conn):
     try:
@@ -134,6 +136,7 @@ def setup_database(conn):
     finally:
         if "cursor" in locals(): cursor.close()
 
+
 def setup_tables(conn):
     try:
         cursor = conn.cursor()
@@ -150,6 +153,7 @@ def setup_tables(conn):
     finally:
         if "cursor" in locals(): cursor.close()
 
+
 @app.route("/")
 def index():
     try:
@@ -163,6 +167,7 @@ def index():
 
     except Exception as e:
         return f"Connection failed: {str(e)}"
+
 
 @app.route("/api/user_permission", methods=["GET"])
 def get_user_permission():
@@ -191,11 +196,12 @@ def get_user_permission():
 
         cursor.close()
         conn.close()
-        
+
         return jsonify({"status": "success", "user_id": user_id, "elem_id": elem_id, "operation": result}, 200)
 
     except Exception as e:
         return jsonify({"status": "failed", "user_id": user_id, "elem_id": elem_id, "operation": None}, 404)
+
 
 if __name__ == "__main__":
     max_retries = 10
