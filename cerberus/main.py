@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import mysql.connector
 import os
 import time
+from contextlib import contextmanager
 
 app = Flask(__name__)
 
@@ -154,19 +155,29 @@ def setup_tables(conn):
         if "cursor" in locals(): cursor.close()
 
 
+@contextmanager
+def get_db_cursor():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        yield cursor
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+
 @app.route("/")
 def index():
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT DATABASE();")
-        db_name = cursor.fetchone()
-        cursor.close()
-        conn.close()
+        with get_db_cursor() as cursor:
+            cursor.execute("SELECT DATABASE();")
+            db_name = cursor.fetchone()
+            
         return f"Connected to database: {db_name[0]}"
 
     except Exception as e:
-        return f"Connection failed: {str(e)}"
+        return f"Connection failed: {str(e)}", 500
 
 
 @app.route("/api/user_permission", methods=["GET"])
@@ -174,33 +185,26 @@ def get_user_permission():
     user_id = request.args.get("user_id")
     elem_id = request.args.get("elem_id")
 
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(f"""
-            SELECT name 
-            FROM (SELECT * FROM permission WHERE elem_id = {elem_id}) AS permission 
-                INNER JOIN 
-                    (SELECT * FROM user_permission WHERE user_id = {user_id}) AS user_permission 
-                    ON permission.id = user_permission.permission_id
-                INNER JOIN operation ON permission.operation_id = operation.id
-            ORDER BY modified_date DESC;
-        """)
-        
+    with get_db_cursor() as cursor:
+        query = """
+            SELECT op.name 
+            FROM permission p
+            INNER JOIN user_permission up ON p.id = up.permission_id
+            INNER JOIN operation op ON p.operation_id = op.id
+            WHERE up.user_id = %s AND p.elem_id = %s
+            ORDER BY p.created_date DESC
+            LIMIT 1;
+        """
+        cursor.execute(query, (user_id, elem_id))
         res = cursor.fetchone()
-        if res:
-            result = res[0]
-        else:
-            result = None
 
-        cursor.close()
-        conn.close()
-
-        return jsonify({"status": "success", "user_id": user_id, "elem_id": elem_id, "operation": result}, 200)
-
-    except Exception as e:
-        return jsonify({"status": "failed", "user_id": user_id, "elem_id": elem_id, "operation": None}, 404)
+    result = res[0] if res else None
+    return jsonify({
+        "status": "success" if result else "not_found",
+        "user_id": user_id, 
+        "elem_id": elem_id, 
+        "operation": result
+    }), 200
 
 
 if __name__ == "__main__":
