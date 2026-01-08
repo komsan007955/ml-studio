@@ -10,7 +10,7 @@ help:
 	@echo "  make db      - Enter the MySQL terminal inside the container"
 
 up:
-	docker compose up --build
+	docker compose up --build -d
 
 down:
 	docker compose down

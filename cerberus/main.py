@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 import mysql.connector
 import os
 import time
@@ -163,6 +163,39 @@ def index():
 
     except Exception as e:
         return f"Connection failed: {str(e)}"
+
+@app.route("/api/user_permission", methods=["GET"])
+def get_user_permission():
+    user_id = request.args.get("user_id")
+    elem_id = request.args.get("elem_id")
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(f"""
+            SELECT name 
+            FROM (SELECT * FROM permission WHERE elem_id = {elem_id}) AS permission 
+                INNER JOIN 
+                    (SELECT * FROM user_permission WHERE user_id = {user_id}) AS user_permission 
+                    ON permission.id = user_permission.permission_id
+                INNER JOIN operation ON permission.operation_id = operation.id
+            ORDER BY modified_date DESC;
+        """)
+        
+        res = cursor.fetchone()
+        if res:
+            result = res[0]
+        else:
+            result = None
+
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"status": "success", "user_id": user_id, "elem_id": elem_id, "operation": result}, 200)
+
+    except Exception as e:
+        return jsonify({"status": "failed", "user_id": user_id, "elem_id": elem_id, "operation": None}, 404)
 
 if __name__ == "__main__":
     max_retries = 10
