@@ -184,26 +184,24 @@ def index():
 def get_user_permission():
     user_id = request.args.get("user_id")
     elem_id = request.args.get("elem_id")
+    operation_name = request.args.get("operation_name")
 
     with get_db_cursor() as cursor:
         query = """
-            SELECT op.name 
+            SELECT op.name
             FROM permission p
             INNER JOIN user_permission up ON p.id = up.permission_id
             INNER JOIN operation op ON p.operation_id = op.id
-            WHERE up.user_id = %s AND p.elem_id = %s
-            ORDER BY p.created_date DESC
-            LIMIT 1;
+            WHERE up.user_id = %s AND p.elem_id = %s AND op.name = %s;
         """
-        cursor.execute(query, (user_id, elem_id))
+        cursor.execute(query, (user_id, elem_id, operation_name))
         res = cursor.fetchone()
 
-    result = res[0] if res else None
     return jsonify({
-        "status": "success" if result else "not_found",
+        "has_permission": bool(res),
         "user_id": user_id, 
         "elem_id": elem_id, 
-        "operation": result
+        "operation_name": operation_name
     }), 200
 
 
