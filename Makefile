@@ -20,7 +20,7 @@ reset:
 	docker compose up --build -d
 
 db:
-	docker compose exec db mysql -u blendata -p'l;ylfu=k;F]d1' auth
+	docker compose exec db mysql -u blendata -p'#########' auth
 
 # This line ensures 'make' doesn't get confused if you have a file named 'up' or 'db'
 .PHONY: up down reset logs db help

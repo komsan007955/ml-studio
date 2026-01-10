@@ -1,7 +1,10 @@
 services:
   # The Flask App
   web:
-    build: .
+    build:
+      context: .
+      args:
+        - APP_NAME=cerberus
     image: cerberus-api
     ports:
       - "5000:5000"
@@ -36,6 +39,43 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  
+  # PostgreSQL for MLflow Metadata
+  pg-db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: blendata
+      POSTGRES_PASSWORD: "#########"
+      POSTGRES_DB: mlflow
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blendata -d mlflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # MLflow Tracking Server
+  mlflow:
+    build: .
+    container_name: mlflow_server
+    restart: always
+    ports:
+      - "5050:5000"
+    environment:
+      - BACKEND_STORE_URI=postgresql://blendata:#########@pg-db:5432/mlflow
+    command: >
+      mlflow server 
+      --backend-store-uri postgresql://blendata:#########@pg-db:5432/mlflow
+      --host 0.0.0.0
+      --port 5000
+      --serve-artifacts
+      --default-artifact-root mlflow-artifacts:/
+    depends_on:
+      pg-db:
+        condition: service_healthy
 
 volumes:
   mysql_data:
+  pg_data:
