@@ -76,6 +76,17 @@ services:
       pg-db:
         condition: service_healthy
 
+  # ML Studio Backend
+  ml_studio:
+    build:
+      context: .
+      args:
+        - APP_NAME=ml_studio
+    image: ml_studio
+    container_name: ml_studio
+    ports:
+      - "5001:5000"
+
 volumes:
   mysql_data:
   pg_data:
