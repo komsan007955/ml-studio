@@ -1,10 +1,7 @@
 import requests
 
-url = "http://43.255.106.103:5000/api/2.0/mlflow/"
-
-headers = {
-    "Content-Type": "application/json"
-}
+url = "http://localhost:5050/api/2.0/mlflow/"
+headers = {"Content-Type": "application/json"}
 
 def create_experiment(name):
     res = requests.post(
@@ -13,12 +10,9 @@ def create_experiment(name):
         json={"name": name}
     )
 
-    if res.status_code == 200:
-        print("Success!")
-        return res.json()
-    else:
-        print(f"Failed with status code: {res.status_code}")
-        return res.text
+    return res.json() if res.status_code == 200 else res.text
     
 def list_experiments(max_results=1000):
     pass
+
+print(create_experiment("test"))
