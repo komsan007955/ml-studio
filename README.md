@@ -34,8 +34,9 @@ To ensure this project remains platform-independent and portable, all dependenci
 ### System Requirements
 
 * **Operating System:** Linux (Recommended: Nobara/Fedora/Ubuntu), macOS, or Windows 10/11 (with WSL2 enabled).
-* **Hardware:** * Minimum **8GB RAM** (To support simultaneous execution of MySQL, PostgreSQL, MLflow, two Flask backends, and a React development server).
-* Minimum **5GB Disk Space** (For base images and persistent database volumes).
+* **Hardware:** 
+  * Minimum **8GB RAM** (To support simultaneous execution of MySQL, PostgreSQL, MLflow, two Flask backends, and a React development server).
+  * Minimum **5GB Disk Space** (For base images and persistent database volumes).
 
 ### Connectivity
 
