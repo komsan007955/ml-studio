@@ -1,5 +1,29 @@
 # ML Studio
 
+- [ML Studio](#ml-studio)
+  - [Project Overview](#project-overview)
+  - [Architecture Diagram](#architecture-diagram)
+  - [Prerequisites](#prerequisites)
+    - [System Requirements](#system-requirements)
+    - [Connectivity](#connectivity)
+  - [Getting Started (Docker)](#getting-started-docker)
+    - [1. Build and Deploy](#1-build-and-deploy)
+    - [2. Service Verification](#2-service-verification)
+      - [**A. MySQL Database (Auth)**](#a-mysql-database-auth)
+      - [**B. Cerberus API (Port 5000)**](#b-cerberus-api-port-5000)
+      - [**C. PostgreSQL Database (MLflow Metadata)**](#c-postgresql-database-mlflow-metadata)
+      - [**D. MLflow UI (Port 5050)**](#d-mlflow-ui-port-5050)
+      - [**E. ML Studio Backend (Port 5001)**](#e-ml-studio-backend-port-5001)
+      - [**F. ML Studio UI (Port 3000)**](#f-ml-studio-ui-port-3000)
+    - [3. Shutdown and Cleanup](#3-shutdown-and-cleanup)
+  - [Project Structure](#project-structure)
+  - [API Documentation](#api-documentation)
+  - [MLflow Integration](#mlflow-integration)
+  - [Development \& Testing](#development--testing)
+  - [Known Issues \& Troubleshooting](#known-issues--troubleshooting)
+  - [Roadmap / Future Enhancements](#roadmap--future-enhancements)
+  - [License](#license)
+
 ## Project Overview
 
 **ML Studio** is an enterprise-grade machine learning module integrated into the <a href="https://blendata.com/product/blendata-enterprise/">**Blendata Enterprise**</a> big data platform. While it leverages **MLflow** to handle the core machine learning lifecycle, it is specifically designed to overcome the limitations MLflow faces in large-scale organizational environments.
