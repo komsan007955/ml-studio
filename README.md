@@ -16,19 +16,37 @@ Ultimately, ML Studio transforms an open-source tool into a secure, consistent, 
 
 <img src="architecture.png">
 
-According to the architecture diagram, users can interact with ML Studio via either ML Studio application or notebooks. Both user interfaces are connected to MLflow application, which is composed of MLflow tracking server accessing PostgreSQL database, to interact with MLflow.
+According to the architecture diagram, there are 3 applications running in ML Studio system:
 
----
+- **ML Studio application:** having React application as the frontend interacting Flask server as the backend
+- **Cerberus application:** having Flask server as the source of APIs accessing MySQL database
+- **MLflow application:** having MLflow tracking server as the source of APIs accessing PostgreSQL database
+
+Users can interact with ML Studio via either ML Studio application or notebooks. Each user interface can interact with Cerberus to operate some process related to user access control. Besides, both user interfaces are connected to MLflow application to access some assets in MLflow.
 
 ## Prerequisites
 
-[List the software needed to run the project, such as Docker, Docker Compose, and any specific versions of Node.js or Python used for local development.]
+To ensure this project remains platform-independent and portable, all dependencies (Python libraries, Node modules, and system packages) are managed within Docker containers. The only requirements for the host machine are:
 
-## Environment Configuration
+* **Docker:** Version 20.10.0 or higher.
+* **Docker Compose:** Version 2.0.0 or higher (now included by default with Docker Desktop).
 
-[Detail the required `.env` variables or environment arguments needed for Docker, such as database credentials and MLflow tracking URIs.]
+### System Requirements
 
----
+* **Operating System:** Linux (Recommended: Nobara/Fedora/Ubuntu), macOS, or Windows 10/11 (with WSL2 enabled).
+* **Hardware:** * Minimum **8GB RAM** (To support simultaneous execution of MySQL, PostgreSQL, MLflow, two Flask backends, and a React development server).
+* Minimum **5GB Disk Space** (For base images and persistent database volumes).
+
+### Connectivity
+
+* **Internet Access:** Required for the initial build to pull base images (`python:3.11-slim`, `node:18-alpine`, `mysql:8.0`, `postgres:15`) and install dependencies via `pip` and `npm`.
+* **Port Availability:** Ensure the following ports are not being used by other local services:
+* `3000` (Dashboard Frontend)
+* `5000` (Cerberus API)
+* `5001` (Portal API)
+* `5050` (MLflow UI)
+* `3306` (MySQL)
+* `5432` (PostgreSQL)
 
 ## Getting Started (Docker)
 
