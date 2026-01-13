@@ -65,43 +65,7 @@ docker compose up --build -d
 
 To ensure each module is functioning correctly, perform the following health checks:
 
-#### **A. MySQL Database (Auth)**
-
-Verify that the RBAC schema is correctly initialized:
-
-```bash
-docker compose exec db mysql -u blendata -p'#########' auth
-
-```
-
-Inside the MySQL shell, run `SHOW TABLES;`. You should see the following output:
-
-```text
-+-----------------+
-| Tables_in_auth  |
-+-----------------+
-| component       |
-| element         |
-| operation       |
-| permission      |
-| user            |
-| user_permission |
-+-----------------+
-
-```
-
-#### **B. Cerberus API (Port 5000)**
-
-Test the primary authentication and permission backend:
-
-```bash
-curl localhost:5000
-
-```
-
-**Success Output:** `Connected to database: auth`
-
-#### **C. PostgreSQL Database (MLflow Metadata)**
+#### **A. PostgreSQL Database (MLflow Metadata)**
 
 Verify the metadata store for MLflow:
 
@@ -112,7 +76,7 @@ docker exec -it ml-studio-sim-pg-db-1 psql --user=blendata --dbname=mlflow
 
 Inside the psql shell, run `\d` to list the internal MLflow tracking tables.
 
-#### **D. MLflow UI (Port 5050)**
+#### **B. MLflow UI (Port 5050)**
 
 Access the experiment tracking dashboard by navigating to:
 **URL:** `http://localhost:5050`
@@ -121,7 +85,7 @@ The resulting webpage should look like this:
 
 <img src="images/mlflow-ui.png">
 
-#### **E. ML Studio Backend (Port 5001)**
+#### **C. ML Studio Backend (Port 5001)**
 
 Verify the standalone ML Studio service:
 
@@ -132,7 +96,7 @@ curl localhost:5001
 
 **Expected Response:** `{"message":"Welcome to ML Studio","service":"ml_studio","status":"Online"}`
 
-#### **F. ML Studio UI (Port 3000)**
+#### **D. ML Studio UI (Port 3000)**
 
 Access the custom React dashboard by navigating to:
 **URL:** `http://localhost:3000`
