@@ -41,9 +41,9 @@ To ensure this project remains platform-independent and portable, all dependenci
 
 * **Internet Access:** Required for the initial build to pull base images (`python:3.11-slim`, `node:18-alpine`, `mysql:8.0`, `postgres:15`) and install dependencies via `pip` and `npm`.
 * **Port Availability:** Ensure the following ports are not being used by other local services:
-* `3000` (Dashboard Frontend)
-* `5000` (Cerberus API)
-* `5001` (Portal API)
+* `3000` (ML Studio web module)
+* `5000` (Cerberus API server)
+* `5001` (ML Studio backend server)
 * `5050` (MLflow UI)
 * `3306` (MySQL)
 * `5432` (PostgreSQL)
