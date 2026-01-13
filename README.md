@@ -16,7 +16,7 @@ Ultimately, ML Studio transforms an open-source tool into a secure, consistent, 
 
 <img src="architecture.png">
 
-According to the architecture diagram, users can interact with ML Studio via either ML Studio application or notebooks. Each user interface can interact with Cerberus, which consists of Flask server accessing MySQL database, to operate some process related to user access control. Besides, the user interfaces are connected to MLflow application, which is composed of MLflow tracking server accessing PostgreSQL database, to interact with MLflow.
+According to the architecture diagram, users can interact with ML Studio via either ML Studio application or notebooks. Both user interfaces are connected to MLflow application, which is composed of MLflow tracking server accessing PostgreSQL database, to interact with MLflow.
 
 ---
 
