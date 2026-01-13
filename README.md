@@ -19,10 +19,9 @@ Ultimately, ML Studio transforms an open-source tool into a secure, consistent, 
 According to the architecture diagram, there are 3 applications running in ML Studio system:
 
 - **ML Studio application:** having React application as the frontend interacting Flask server as the backend
-- **Cerberus application:** having Flask server as the source of APIs accessing MySQL database
 - **MLflow application:** having MLflow tracking server as the source of APIs accessing PostgreSQL database
 
-Users can interact with ML Studio via either ML Studio application or notebooks. Each user interface can interact with Cerberus to operate some process related to user access control. Besides, both user interfaces are connected to MLflow application to access some assets in MLflow.
+Users can interact with ML Studio via either ML Studio application or notebooks. Also, both user interfaces are connected to MLflow application to access some assets in MLflow.
 
 ## Prerequisites
 
@@ -41,11 +40,9 @@ To ensure this project remains platform-independent and portable, all dependenci
 
 * **Internet Access:** Required for the initial build to pull base images (`python:3.11-slim`, `node:18-alpine`, `mysql:8.0`, `postgres:15`) and install dependencies via `pip` and `npm`.
 * **Port Availability:** Ensure the following ports are not being used by other local services:
-* `3000` (Dashboard Frontend)
-* `5000` (Cerberus API)
-* `5001` (Portal API)
+* `3000` (ML Studio web module)
+* `5001` (ML Studio backend server)
 * `5050` (MLflow UI)
-* `3306` (MySQL)
 * `5432` (PostgreSQL)
 
 ## Getting Started (Docker)
