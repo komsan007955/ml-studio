@@ -14,7 +14,7 @@ Ultimately, ML Studio transforms an open-source tool into a secure, consistent, 
 
 ## Architecture Diagram
 
-<img src="architecture.png">
+<img src="images/architecture.png">
 
 According to the architecture diagram, there are 3 applications running in ML Studio system:
 
@@ -48,13 +48,118 @@ To ensure this project remains platform-independent and portable, all dependenci
 
 ## Getting Started (Docker)
 
-[Provide the steps to build and launch the entire ecosystem using Docker Compose.]
+Follow these steps to build, deploy, and verify the ML Studio ecosystem. Ensure your Docker engine is running before starting.
+
+### 1. Build and Deploy
+
+Execute the following command to build the custom images for the Python backends and React frontend, and start all services in detached mode:
 
 ```bash
-# Example Command
-[Command]
+docker compose up --build -d
 
 ```
+
+---
+
+### 2. Service Verification
+
+To ensure each module is functioning correctly, perform the following health checks:
+
+#### **A. MySQL Database (Auth)**
+
+Verify that the RBAC schema is correctly initialized:
+
+```bash
+docker compose exec db mysql -u blendata -p'#########' auth
+
+```
+
+Inside the MySQL shell, run `SHOW TABLES;`. You should see the following output:
+
+```text
++-----------------+
+| Tables_in_auth  |
++-----------------+
+| component       |
+| element         |
+| operation       |
+| permission      |
+| user            |
+| user_permission |
++-----------------+
+
+```
+
+#### **B. Cerberus API (Port 5000)**
+
+Test the primary authentication and permission backend:
+
+```bash
+curl localhost:5000
+
+```
+
+**Success Output:** `Connected to database: auth`
+
+#### **C. PostgreSQL Database (MLflow Metadata)**
+
+Verify the metadata store for MLflow:
+
+```bash
+docker exec -it ml-studio-sim-pg-db-1 psql --user=blendata --dbname=mlflow
+
+```
+
+Inside the psql shell, run `\d` to list the internal MLflow tracking tables.
+
+#### **D. MLflow UI (Port 5050)**
+
+Access the experiment tracking dashboard by navigating to:
+**URL:** `http://localhost:5050`
+
+The resulting webpage should look like this:
+
+<img src="images/mlflow-ui.png">
+
+#### **E. ML Studio Backend (Port 5001)**
+
+Verify the standalone ML Studio service:
+
+```bash
+curl localhost:5001
+
+```
+
+**Expected Response:** `{"message":"Welcome to ML Studio","service":"ml_studio","status":"Online"}`
+
+#### **F. ML Studio UI (Port 3000)**
+
+Access the custom React dashboard by navigating to:
+**URL:** `http://localhost:3000`
+
+The resulting webpage should look like this:
+
+<img src="images/ml-studio-ui.png">
+
+---
+
+### 3. Shutdown and Cleanup
+
+To stop the services while keeping your database data intact:
+
+```bash
+docker compose down
+
+```
+
+To perform a "Nuclear Reset" (deleting all containers, networks, and persistent data volumes), use the volume flag:
+
+```bash
+docker compose down -v
+
+```
+
+> **Note:** Use the `-v` flag with caution as it will permanently delete your MLflow experiment history and MySQL user data.
 
 ## Project Structure
 
