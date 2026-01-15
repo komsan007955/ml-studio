@@ -22,12 +22,13 @@ def create_experiment(name, artifact_location=None, tags=None):
     return res.json() if res.status_code == 200 else res.text
 
 
-def search_experiments(max_results=MAX_RESULTS, filter=None, order_by=None, view_type="ACTIVE_ONLY"):
+def search_experiments(max_results=MAX_RESULTS, page_token=None, filter=None, order_by=None, view_type="ACTIVE_ONLY"):
     res = requests.get(
         f"{url}/experiments/search",
         headers=headers,
         params={
             "max_results": max_results, 
+            "page_token": page_token, 
             "filter": filter, 
             "order_by": order_by, 
             "view_type": view_type
