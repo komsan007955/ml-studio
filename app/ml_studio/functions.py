@@ -85,6 +85,19 @@ def update_experiment(experiment_id, new_name):
     return res.json() if res.status_code == 200 else res.text
 
 
+def set_experiment_tag(experiment_id, key, value):
+    res = requests.post(
+        f"{url}/experiments/set-experiment-tag", 
+        headers=headers, 
+        json={
+            "experiment_id": experiment_id, 
+            "key": key, 
+            "value": value
+        }
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
 # =========================
 # Runs
 # =========================
