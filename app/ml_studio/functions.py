@@ -181,7 +181,7 @@ def get_metric_history(run_id, metric_key, max_results=MAX_RESULTS):
     return res.json() if res.status_code == 200 else res.text
 
 
-def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_results=MAX_RESULTS, order_by=None):
+def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_results=MAX_RESULTS, order_by=None, page_token=None):
     res = requests.post(
         f"{url}/runs/search",
         headers=headers,
@@ -190,7 +190,8 @@ def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_re
             "filter": filter,
             "run_view_type": run_view_type, 
             "max_results": max_results, 
-            "order_by": order_by
+            "order_by": order_by, 
+            "page_token": page_token
         }
     )
     return res.json() if res.status_code == 200 else res.text
