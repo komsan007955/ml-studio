@@ -98,6 +98,15 @@ def delete_run(run_id):
     return res.json() if res.status_code == 200 else res.text
 
 
+def restore_run(run_id):
+    res = requests.post(
+        f"{url}/runs/restore", 
+        headers=headers, 
+        json={"run_id": run_id}
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
 def get_run(run_id):
     res = requests.get(
         f"{url}/runs/get", 
