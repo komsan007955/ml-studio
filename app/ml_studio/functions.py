@@ -143,6 +143,31 @@ def get_run(run_id):
     return res.json() if res.status_code == 200 else res.text
 
 
+def set_tag(run_id, key, value):
+    res = requests.post(
+        f"{url}/runs/set-tag", 
+        headers=headers, 
+        json={
+            "run_id": run_id, 
+            "key": key, 
+            "value": value
+        }
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
+def delete_tag(run_id, key):
+    res = requests.post(
+        f"{url}/runs/delete-tag", 
+        headers=headers, 
+        json={
+            "run_id": run_id, 
+            "key": key
+        }
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
 def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_results=MAX_RESULTS, order_by=None):
     res = requests.post(
         f"{url}/runs/search",
