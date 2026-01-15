@@ -9,11 +9,15 @@ MAX_RESULTS = 500
 # Experiments
 # =========================
 
-def create_experiment(name):
+def create_experiment(name, artifact_location=None, tags=None):
     res = requests.post(
         f"{url}/experiments/create",
         headers=headers,
-        json={"name": name}
+        json={
+            "name": name,
+            "artifact_location": artifact_location, 
+            "tags": tags
+        }
     )
     return res.json() if res.status_code == 200 else res.text
 
