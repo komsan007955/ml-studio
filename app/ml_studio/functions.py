@@ -98,6 +98,18 @@ def set_experiment_tag(experiment_id, key, value):
     return res.json() if res.status_code == 200 else res.text
 
 
+def delete_experiment_tag(experiment_id, key):
+    res = requests.post(
+        f"{url}/experiments/delete-experiment-tag", 
+        headers=headers, 
+        json={
+            "experiment_id": experiment_id, 
+            "key": key
+        }
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
 # =========================
 # Runs
 # =========================
