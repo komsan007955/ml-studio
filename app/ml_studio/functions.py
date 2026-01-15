@@ -21,7 +21,6 @@ def create_experiment(name, artifact_location=None, tags=None):
     )
     return res.json() if res.status_code == 200 else res.text
 
-print("Hi")
 
 def search_experiments(max_results=MAX_RESULTS, filter=None, order_by=None, view_type="ACTIVE_ONLY"):
     res = requests.get(
