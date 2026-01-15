@@ -89,6 +89,15 @@ def update_experiment(experiment_id, new_name):
 # Runs
 # =========================
 
+def delete_run(run_id):
+    res = requests.post(
+        f"{url}/runs/delete", 
+        headers=headers, 
+        json={"run_id": run_id}
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
 def get_run(run_id):
     res = requests.get(
         f"{url}/runs/get", 
@@ -108,15 +117,6 @@ def list_runs(experiment_ids, max_results=MAX_RESULTS):
             "experiment_ids": experiment_ids, 
             "max_results": max_results
         }
-    )
-    return res.json() if res.status_code == 200 else res.text
-
-
-def delete_run(run_id):
-    res = requests.post(
-        f"{url}/runs/delete", 
-        headers=headers, 
-        json={"run_id": run_id}
     )
     return res.json() if res.status_code == 200 else res.text
 
