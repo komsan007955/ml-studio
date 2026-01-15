@@ -205,6 +205,7 @@ def list_artifacts(run_id, path=""):
     )
     return res.json() if res.status_code == 200 else res.text
 
+print("Hi!")
 
 # =========================
 # Quick Test
