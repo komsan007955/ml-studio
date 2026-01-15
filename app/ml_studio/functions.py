@@ -168,6 +168,19 @@ def delete_tag(run_id, key):
     return res.json() if res.status_code == 200 else res.text
 
 
+def get_metric_history(run_id, metric_key, max_results=MAX_RESULTS):
+    res = requests.get(
+        f"{url}/metrics/get-history", 
+        headers=headers, 
+        params={
+            "run_id": run_id, 
+            "metric_key": metric_key, 
+            "max_results": max_results
+        }
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
 def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_results=MAX_RESULTS, order_by=None):
     res = requests.post(
         f"{url}/runs/search",
