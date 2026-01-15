@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime
 
 url = "http://localhost:5050/api/2.0/mlflow"
 headers = {"Content-Type": "application/json"}
@@ -205,6 +206,25 @@ def list_artifacts(run_id, path, page_token=None):
             "run_id": run_id, 
             "path": path, 
             "page_token": page_token
+        }
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
+def update_run(run_id, status=None, end_time=None, run_name=None):
+    if status:
+        end_time = end_time if end_time else int(datetime.now().timestamp())
+    else:
+        end_time = None
+    
+    res = requests.post(
+        f"{url}/runs/update",
+        headers=headers,
+        json={
+            "run_id": run_id, 
+            "status": status,
+            "end_time": end_time, 
+            "run_name": run_name
         }
     )
     return res.json() if res.status_code == 200 else res.text
