@@ -118,13 +118,16 @@ def get_run(run_id):
     return res.json() if res.status_code == 200 else res.text
 
 
-def list_runs(experiment_ids, max_results=MAX_RESULTS):
+def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_results=MAX_RESULTS, order_by=None):
     res = requests.post(
         f"{url}/runs/search",
         headers=headers,
         json={
             "experiment_ids": experiment_ids, 
-            "max_results": max_results
+            "filter": filter,
+            "run_view_type": run_view_type, 
+            "max_results": max_results, 
+            "order_by": order_by
         }
     )
     return res.json() if res.status_code == 200 else res.text
