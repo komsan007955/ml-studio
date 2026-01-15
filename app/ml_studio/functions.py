@@ -23,10 +23,10 @@ def create_experiment(name, artifact_location=None, tags=None):
 
 
 def search_experiments(max_results=MAX_RESULTS, page_token=None, filter=None, order_by=None, view_type="ACTIVE_ONLY"):
-    res = requests.get(
+    res = requests.post(
         f"{url}/experiments/search",
         headers=headers,
-        params={
+        json={
             "max_results": max_results, 
             "page_token": page_token, 
             "filter": filter, 
