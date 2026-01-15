@@ -55,18 +55,18 @@ def get_experiment_by_name(experiment_name):
     return res.json() if res.status_code == 200 else res.text
 
 
-def restore_experiment(experiment_id):
+def delete_experiment(experiment_id):
     res = requests.post(
-        f"{url}/experiments/restore", 
+        f"{url}/experiments/delete", 
         headers=headers, 
         json={"experiment_id": experiment_id}
     )
     return res.json() if res.status_code == 200 else res.text
 
 
-def delete_experiment(experiment_id):
+def restore_experiment(experiment_id):
     res = requests.post(
-        f"{url}/experiments/delete", 
+        f"{url}/experiments/restore", 
         headers=headers, 
         json={"experiment_id": experiment_id}
     )
