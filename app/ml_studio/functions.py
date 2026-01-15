@@ -198,19 +198,6 @@ def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_re
     return res.json() if res.status_code == 200 else res.text
 
 
-def list_artifacts(run_id, path, page_token=None):
-    res = requests.get(
-        f"{url}/artifacts/list", 
-        headers=headers, 
-        params={
-            "run_id": run_id, 
-            "path": path, 
-            "page_token": page_token
-        }
-    )
-    return res.json() if res.status_code == 200 else res.text
-
-
 def update_run(run_id, status=None, end_time=None, run_name=None):
     if status:
         end_time = end_time if end_time else int(datetime.now().timestamp())
@@ -305,13 +292,14 @@ def delete_model_version(model_name, version):
 # Artifacts
 # =========================
 
-def list_artifacts(run_id, path=""):
+def list_artifacts(run_id, path, page_token=None):
     res = requests.get(
-        f"{url}/artifacts/list",
-        headers=headers,
+        f"{url}/artifacts/list", 
+        headers=headers, 
         params={
-            "run_id": run_id,
-            "path": path
+            "run_id": run_id, 
+            "path": path, 
+            "page_token": page_token
         }
     )
     return res.json() if res.status_code == 200 else res.text
