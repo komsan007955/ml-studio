@@ -357,6 +357,7 @@ def get_latest_model_versions(name, stages=None):
     )
     return res.json() if res.status_code == 200 else res.text
 
+
 def create_model_version(name, source, run_id=None, tags=None, run_link=None, description=None, model_id=None):
     res = requests.post(
         f"{url}/model-versions/create",
@@ -373,6 +374,7 @@ def create_model_version(name, source, run_id=None, tags=None, run_link=None, de
     )
     return res.json() if res.status_code == 200 else res.text
 
+
 def get_model_version(name, version):
     res = requests.get(
         f"{url}/model-versions/get",
@@ -383,6 +385,7 @@ def get_model_version(name, version):
         }
     )
     return res.json() if res.status_code == 200 else res.text
+
 
 def update_model_version(name, version, description=None):
     res = requests.patch(
@@ -396,6 +399,7 @@ def update_model_version(name, version, description=None):
     )
     return res.json() if res.status_code == 200 else res.text
 
+
 def delete_model_version(name, version):
     res = requests.delete(
         f"{url}/model-versions/delete",
@@ -407,12 +411,8 @@ def delete_model_version(name, version):
     )
     return res.json() if res.status_code == 200 else res.text
 
-def search_model_versions(
-    filter=None,
-    max_results=MAX_RESULTS,
-    order_by=None,
-    page_token=None
-):
+
+def search_model_versions(filter=None, max_results=MAX_RESULTS, order_by=None, page_token=None):
     res = requests.get(
         f"{url}/model-versions/search",
         headers=headers,
@@ -425,6 +425,7 @@ def search_model_versions(
     )
     return res.json() if res.status_code == 200 else res.text
 
+
 def get_model_version_download_uri(name, version):
     res = requests.get(
         f"{url}/model-versions/get-download-uri",
@@ -436,12 +437,8 @@ def get_model_version_download_uri(name, version):
     )
     return res.json() if res.status_code == 200 else res.text
 
-def transition_model_version_stage(
-    name,
-    version,
-    stage,
-    archive_existing_versions
-):
+
+def transition_model_version_stage(name, version, stage, archive_existing_versions):
     res = requests.post(
         f"{url}/model-versions/transition-stage",
         headers=headers,
@@ -453,6 +450,7 @@ def transition_model_version_stage(
         }
     )
     return res.json() if res.status_code == 200 else res.text
+
 
 def set_model_version_tag(name, version, key, value):
     res = requests.post(
@@ -508,6 +506,7 @@ def list_artifacts(run_id, path, page_token=None):
         }
     )
     return res.json() if res.status_code == 200 else res.text
+
 
 # =========================
 # Quick Test
