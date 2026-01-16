@@ -234,6 +234,7 @@ def create_registered_model(name, tags=None, description=None, deployment_job_id
     )
     return res.json() if res.status_code == 200 else res.text
 
+
 def get_registered_model(name):
     res = requests.get(
         f"{url}/registered-models/get",
@@ -241,6 +242,7 @@ def get_registered_model(name):
         params={"name": name}
     )
     return res.json() if res.status_code == 200 else res.text
+
 
 def rename_registered_model(name, new_name):
     res = requests.post(
@@ -252,6 +254,7 @@ def rename_registered_model(name, new_name):
         }
     )
     return res.json() if res.status_code == 200 else res.text
+
 
 def update_registered_model(name, description=None, deployment_job_id=None):
     res = requests.patch(
@@ -265,6 +268,7 @@ def update_registered_model(name, description=None, deployment_job_id=None):
     )
     return res.json() if res.status_code == 200 else res.text
 
+
 def delete_registered_model(name):
     res = requests.delete(
         f"{url}/registered-models/delete",
@@ -273,12 +277,8 @@ def delete_registered_model(name):
     )
     return res.json() if res.status_code == 200 else res.text
 
-def search_registered_models(
-    filter=None,
-    max_results=100,
-    order_by=None,
-    page_token=None
-):
+
+def search_registered_models(filter=None, max_results=MAX_RESULTS, order_by=None, page_token=None):
     res = requests.get(
         f"{url}/registered-models/search",
         headers=headers,
@@ -290,6 +290,7 @@ def search_registered_models(
         }
     )
     return res.json() if res.status_code == 200 else res.text
+
 
 def set_registered_model_tag(name, key, value):
     res = requests.post(
@@ -303,6 +304,7 @@ def set_registered_model_tag(name, key, value):
     )
     return res.json() if res.status_code == 200 else res.text
 
+
 def delete_registered_model_tag(name, key):
     res = requests.delete(
         f"{url}/registered-models/delete-tag",
@@ -314,17 +316,6 @@ def delete_registered_model_tag(name, key):
     )
     return res.json() if res.status_code == 200 else res.text
 
-def delete_model_version_tag(name, version, key):
-    res = requests.delete(
-        f"{url}/model-versions/delete-tag",
-        headers=headers,
-        json={
-            "name": name,
-            "version": version,
-            "key": key
-        }
-    )
-    return res.json() if res.status_code == 200 else res.text
 
 def delete_registered_model_alias(name, alias):
     res = requests.delete(
@@ -337,16 +328,6 @@ def delete_registered_model_alias(name, alias):
     )
     return res.json() if res.status_code == 200 else res.text
 
-def get_model_version_by_alias(name, alias):
-    res = requests.get(
-        f"{url}/registered-models/alias",
-        headers=headers,
-        params={
-            "name": name,
-            "alias": alias
-        }
-    )
-    return res.json() if res.status_code == 200 else res.text
 
 def set_registered_model_alias(name, alias, version):
     res = requests.post(
@@ -359,6 +340,7 @@ def set_registered_model_alias(name, alias, version):
         }
     )
     return res.json() if res.status_code == 200 else res.text
+
 
 # =========================
 # Model Versions
@@ -375,15 +357,7 @@ def get_latest_model_versions(name, stages=None):
     )
     return res.json() if res.status_code == 200 else res.text
 
-def create_model_version(
-    name,
-    source,
-    run_id=None,
-    tags=None,
-    run_link=None,
-    description=None,
-    model_id=None
-):
+def create_model_version(name, source, run_id=None, tags=None, run_link=None, description=None, model_id=None):
     res = requests.post(
         f"{url}/model-versions/create",
         headers=headers,
@@ -492,6 +466,32 @@ def set_model_version_tag(name, version, key, value):
         }
     )
     return res.json() if res.status_code == 200 else res.text
+
+
+def delete_model_version_tag(name, version, key):
+    res = requests.delete(
+        f"{url}/model-versions/delete-tag",
+        headers=headers,
+        json={
+            "name": name,
+            "version": version,
+            "key": key
+        }
+    )
+    return res.json() if res.status_code == 200 else res.text
+
+
+def get_model_version_by_alias(name, alias):
+    res = requests.get(
+        f"{url}/registered-models/alias",
+        headers=headers,
+        params={
+            "name": name,
+            "alias": alias
+        }
+    )
+    return res.json() if res.status_code == 200 else res.text
+
 
 # =========================
 # Artifacts
