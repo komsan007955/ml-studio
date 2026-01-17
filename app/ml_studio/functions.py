@@ -26,7 +26,6 @@ def create_experiment(name, artifact_location=None, tags=None):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def search_experiments(max_results=MAX_RESULTS, page_token=None, filter=None, order_by=None, view_type="ACTIVE_ONLY"):
     res = requests.post(
         f"{url}/experiments/search",
@@ -41,7 +40,6 @@ def search_experiments(max_results=MAX_RESULTS, page_token=None, filter=None, or
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def get_experiment(experiment_id):
     res = requests.get(
         f"{url}/experiments/get", 
@@ -49,7 +47,6 @@ def get_experiment(experiment_id):
         params={"experiment_id": experiment_id}
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def get_experiment_by_name(experiment_name):
     res = requests.get(
@@ -59,7 +56,6 @@ def get_experiment_by_name(experiment_name):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def delete_experiment(experiment_id):
     res = requests.post(
         f"{url}/experiments/delete", 
@@ -68,7 +64,6 @@ def delete_experiment(experiment_id):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def restore_experiment(experiment_id):
     res = requests.post(
         f"{url}/experiments/restore", 
@@ -76,7 +71,6 @@ def restore_experiment(experiment_id):
         json={"experiment_id": experiment_id}
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def update_experiment(experiment_id, new_name):
     res = requests.post(
@@ -88,7 +82,6 @@ def update_experiment(experiment_id, new_name):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def set_experiment_tag(experiment_id, key, value):
     res = requests.post(
@@ -102,7 +95,6 @@ def set_experiment_tag(experiment_id, key, value):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def delete_experiment_tag(experiment_id, key):
     res = requests.post(
         f"{url}/experiments/delete-experiment-tag", 
@@ -113,7 +105,6 @@ def delete_experiment_tag(experiment_id, key):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 # =========================
 # Runs
@@ -127,7 +118,6 @@ def delete_run(run_id):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def restore_run(run_id):
     res = requests.post(
         f"{url}/runs/restore", 
@@ -135,7 +125,6 @@ def restore_run(run_id):
         json={"run_id": run_id}
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def get_run(run_id):
     res = requests.get(
@@ -146,7 +135,6 @@ def get_run(run_id):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def set_tag(run_id, key, value):
     res = requests.post(
@@ -160,7 +148,6 @@ def set_tag(run_id, key, value):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def delete_tag(run_id, key):
     res = requests.post(
         f"{url}/runs/delete-tag", 
@@ -171,7 +158,6 @@ def delete_tag(run_id, key):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def get_metric_history(run_id, metric_key, max_results=MAX_RESULTS):
     res = requests.get(
@@ -184,7 +170,6 @@ def get_metric_history(run_id, metric_key, max_results=MAX_RESULTS):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_results=MAX_RESULTS, order_by=None, page_token=None):
     res = requests.post(
@@ -201,13 +186,11 @@ def search_runs(experiment_ids, filter=None, run_view_type="ACTIVE_ONLY", max_re
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def update_run(run_id, status=None, end_time=None, run_name=None):
     if status:
         end_time = end_time if end_time else int(datetime.now().timestamp())
     else:
         end_time = None
-    
     res = requests.post(
         f"{url}/runs/update",
         headers=headers,
@@ -219,7 +202,6 @@ def update_run(run_id, status=None, end_time=None, run_name=None):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 # =========================
 # Models (Model Registry)
@@ -238,7 +220,6 @@ def create_registered_model(name, tags=None, description=None, deployment_job_id
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def get_registered_model(name):
     res = requests.get(
         f"{url}/registered-models/get",
@@ -246,7 +227,6 @@ def get_registered_model(name):
         params={"name": name}
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def rename_registered_model(name, new_name):
     res = requests.post(
@@ -258,7 +238,6 @@ def rename_registered_model(name, new_name):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def update_registered_model(name, description=None, deployment_job_id=None):
     res = requests.patch(
@@ -272,7 +251,6 @@ def update_registered_model(name, description=None, deployment_job_id=None):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def delete_registered_model(name):
     res = requests.delete(
         f"{url}/registered-models/delete",
@@ -280,7 +258,6 @@ def delete_registered_model(name):
         json={"name": name}
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def search_registered_models(filter=None, max_results=MAX_RESULTS, order_by=None, page_token=None):
     res = requests.get(
@@ -295,7 +272,6 @@ def search_registered_models(filter=None, max_results=MAX_RESULTS, order_by=None
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def set_registered_model_tag(name, key, value):
     res = requests.post(
         f"{url}/registered-models/set-tag",
@@ -308,7 +284,6 @@ def set_registered_model_tag(name, key, value):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def delete_registered_model_tag(name, key):
     res = requests.delete(
         f"{url}/registered-models/delete-tag",
@@ -319,7 +294,6 @@ def delete_registered_model_tag(name, key):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def delete_registered_model_alias(name, alias):
     res = requests.delete(
@@ -332,7 +306,6 @@ def delete_registered_model_alias(name, alias):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def set_registered_model_alias(name, alias, version):
     res = requests.post(
         f"{url}/registered-models/alias",
@@ -344,7 +317,6 @@ def set_registered_model_alias(name, alias, version):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 # =========================
 # Model Versions
@@ -360,7 +332,6 @@ def get_latest_model_versions(name, stages=None):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def create_model_version(name, source, run_id=None, tags=None, run_link=None, description=None, model_id=None):
     res = requests.post(
@@ -378,7 +349,6 @@ def create_model_version(name, source, run_id=None, tags=None, run_link=None, de
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def get_model_version(name, version):
     res = requests.get(
         f"{url}/model-versions/get",
@@ -389,7 +359,6 @@ def get_model_version(name, version):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def update_model_version(name, version, description=None):
     res = requests.patch(
@@ -403,7 +372,6 @@ def update_model_version(name, version, description=None):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def delete_model_version(name, version):
     res = requests.delete(
         f"{url}/model-versions/delete",
@@ -414,7 +382,6 @@ def delete_model_version(name, version):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def search_model_versions(filter=None, max_results=MAX_RESULTS, order_by=None, page_token=None):
     res = requests.get(
@@ -429,7 +396,6 @@ def search_model_versions(filter=None, max_results=MAX_RESULTS, order_by=None, p
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def get_model_version_download_uri(name, version):
     res = requests.get(
         f"{url}/model-versions/get-download-uri",
@@ -440,7 +406,6 @@ def get_model_version_download_uri(name, version):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 def transition_model_version_stage(name, version, stage, archive_existing_versions):
     res = requests.post(
@@ -455,7 +420,6 @@ def transition_model_version_stage(name, version, stage, archive_existing_versio
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def set_model_version_tag(name, version, key, value):
     res = requests.post(
         f"{url}/model-versions/set-tag",
@@ -469,7 +433,6 @@ def set_model_version_tag(name, version, key, value):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def delete_model_version_tag(name, version, key):
     res = requests.delete(
         f"{url}/model-versions/delete-tag",
@@ -482,7 +445,6 @@ def delete_model_version_tag(name, version, key):
     )
     return res.json() if res.status_code == 200 else res.text
 
-
 def get_model_version_by_alias(name, alias):
     res = requests.get(
         f"{url}/registered-models/alias",
@@ -493,7 +455,6 @@ def get_model_version_by_alias(name, alias):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
 
 # =========================
 # Artifacts
@@ -510,12 +471,3 @@ def list_artifacts(run_id, path, page_token=None):
         }
     )
     return res.json() if res.status_code == 200 else res.text
-
-
-# =========================
-# Quick Test
-# =========================
-
-# if __name__ == "__main__":
-#     print(create_experiment("test"))
-#     print(list_experiments())
