@@ -5,7 +5,6 @@ import functions as fn
 app = Flask(__name__)
 CORS(app)
 
-
 # =========================
 # Basic
 # =========================
@@ -21,7 +20,6 @@ def index():
 @app.route("/api/hello")
 def hello():
     return jsonify({"data": "Hello from ML Studio!"})
-
 
 # =========================
 # Experiments
@@ -114,7 +112,6 @@ def api_delete_experiment_tag():
         return jsonify({"error": "'experiment_id' and 'key' are required"}), 400
     res = fn.delete_experiment_tag(experiment_id, key)
     return jsonify(res)
-
 
 # =========================
 # Main
