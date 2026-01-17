@@ -45,5 +45,7 @@ COPY . .
 
 EXPOSE 5001
 
-ENV APP_PATH=app/${APP_NAME}/main.py
-CMD python ${APP_PATH}
+ENV APP_DIR=/app/app/${APP_NAME}
+ENV PYTHONPATH=${APP_DIR}
+
+CMD ["sh", "-c", "python ${APP_DIR}/main.py"]
