@@ -1,8 +1,12 @@
 import requests
 from datetime import datetime
 
-url = "http://localhost:5050/api/2.0/mlflow"
-headers = {"Content-Type": "application/json"}
+url = "http://mlflow:5000/api/2.0/mlflow"
+headers = {
+    "Content-Type": "application/json",
+    "Host": "localhost"
+}
+
 MAX_RESULTS = 500
 
 
