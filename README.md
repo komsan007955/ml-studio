@@ -17,7 +17,6 @@
       - [**F. ML Studio UI (Port 3000)**](#f-ml-studio-ui-port-3000)
     - [3. Shutdown and Cleanup](#3-shutdown-and-cleanup)
   - [Project Structure](#project-structure)
-    - [Notable Files](#notable-files)
   - [API Documentation](#api-documentation)
   - [MLflow Integration](#mlflow-integration)
   - [Development \& Testing](#development--testing)
@@ -191,57 +190,9 @@ docker compose down -v
 
 ## Project Structure
 
-```
-└── 📁ml-studio
-    └── 📁app
-        └── 📁cerberus
-            ├── main.py
-            ├── requirements.txt
-        └── 📁ml_studio
-            ├── functions.py
-            ├── main.py
-            ├── requirements.txt
-        └── 📁mlflow
-            ├── requirements.txt
-        └── 📁ui
-            └── 📁public
-                ├── index.html
-            └── 📁src
-                ├── App.js
-                ├── index.js
-            ├── Dockerfile
-            ├── package.json
-        └── 📁zeppelin
-            ├── test.ipynb
-        ├── base_requirements.txt
-    └── 📁images
-        ├── architecture.png
-        ├── ml-studio-ui.png
-        ├── mlflow-ui.png
-    ├── .gitignore
-    ├── docker-compose.yml
-    ├── Dockerfile
-    ├── Makefile
-    ├── README.md
-    └── test-note.txt
-```
+[Map out the directory layout, explaining the purpose of the `/app`, `/cerberus`, and `/mlflow` subdirectories.]
 
-Focusing on `app` as the main directory, we can see 5 sub-directories representing key servers of ML Studio:
-
-- `cerberus`: has `main.py` as the main Python program running a Flask application.
-- `ml_studio`: consists of
-  - `main.py` as the main Python program running a Flask application
-  - `function.py` to store key MLflow functions
-- `mlflow`: doesn't rely on any program at the moment as it's a complete package since installation.
-- `ui`: acts as the main directory of a React project responsible for ML Studio's UI.
-- `zeppelin`: stores notebooks that calls MLflow. In this version, it's actually not a server but created to simulate a real Apache Zeppelin server.
-
-### Notable Files
-
-- `base_requirements.txt`: lists Python libraries commonly used across different servers (such as Flask).
-- `docker-compose.yml`: lists Docker container compositions and their configurations.
-- `Dockerfile`: orders commands used for container setup.
-- `Makefile`: shortcuts frequently used commands to facilitate operation and testing process.
+---
 
 ## API Documentation
 
