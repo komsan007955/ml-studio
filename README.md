@@ -194,9 +194,6 @@ docker compose down -v
 ```
 └── 📁ml-studio
     └── 📁app
-        └── 📁cerberus
-            ├── main.py
-            ├── requirements.txt
         └── 📁ml_studio
             ├── functions.py
             ├── main.py
@@ -228,7 +225,6 @@ docker compose down -v
 
 Focusing on `app` as the main directory, we can see 5 sub-directories representing key servers of ML Studio:
 
-- `cerberus`: has `main.py` as the main Python program running a Flask application.
 - `ml_studio`: consists of
   - `main.py` as the main Python program running a Flask application
   - `function.py` to store key MLflow functions
