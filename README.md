@@ -19,6 +19,12 @@
   - [Project Structure](#project-structure)
     - [Notable Files](#notable-files)
   - [API Documentation](#api-documentation)
+    - [**Experiments**](#experiments)
+    - [**Runs**](#runs)
+    - [**Model Registry**](#model-registry)
+    - [**Model Versions**](#model-versions)
+    - [**Artifacts**](#artifacts)
+    - [**Error Responses**](#error-responses)
   - [MLflow Integration](#mlflow-integration)
   - [Development \& Testing](#development--testing)
   - [Known Issues \& Troubleshooting](#known-issues--troubleshooting)
@@ -241,7 +247,74 @@ Focusing on `app` as the main directory, we can see 5 sub-directories representi
 
 ## API Documentation
 
-[List the available endpoints for the various Flask services (e.g., `/api/status`, `/api/data`) and briefly describe their inputs and outputs.]
+ML Studio provides a RESTful API layer that acts as a bridge between the frontend and the MLflow Tracking Server. This documentation outlines the available endpoints for managing experiments, runs, models, and artifacts.
+
+### **Experiments**
+
+| Endpoint | Method | Parameters (JSON / Query) | Description |
+| --- | --- | --- | --- |
+| `/api/experiments/create` | `POST` | `name` (req), `artifact_location`, `tags` | Creates a new MLflow experiment. |
+| `/api/experiments/search` | `POST` | `max_results`, `filter`, `view_type`, `order_by` | Searches for experiments matching specific criteria. |
+| `/api/experiments/get` | `GET` | `experiment_id` (req) | Retrieves metadata for a specific experiment. |
+| `/api/experiments/get-by-name` | `GET` | `experiment_name` (req) | Retrieves experiment metadata using its unique name. |
+| `/api/experiments/update` | `POST` | `experiment_id` (req), `new_name` (req) | Renames an existing experiment. |
+| `/api/experiments/delete` | `POST` | `experiment_id` (req) | Marks an experiment for deletion. |
+| `/api/experiments/restore` | `POST` | `experiment_id` (req) | Restores an experiment marked for deletion. |
+
+---
+
+### **Runs**
+
+| Endpoint | Method | Parameters (JSON / Query) | Description |
+| --- | --- | --- | --- |
+| `/api/runs/search` | `POST` | `experiment_ids` (req), `filter`, `max_results` | Searches for runs within specific experiments. |
+| `/api/runs/get` | `GET` | `run_id` (req) | Retrieves detailed metadata and data for a specific run. |
+| `/api/runs/update` | `POST` | `run_id` (req), `status`, `run_name` | Updates the status or name of a specific run. |
+| `/api/runs/delete` | `POST` | `run_id` (req) | Deletes a specific run. |
+| `/api/metrics/get-history` | `GET` | `run_id` (req), `metric_key` (req) | Retrieves the full history of a specific metric for a run. |
+
+---
+
+### **Model Registry**
+
+| Endpoint | Method | Parameters (JSON / Query) | Description |
+| --- | --- | --- | --- |
+| `/api/models/create` | `POST` | `name` (req), `tags`, `description` | Registers a new model in the Model Registry. |
+| `/api/models/get` | `GET` | `name` (req) | Retrieves metadata for a registered model. |
+| `/api/models/rename` | `POST` | `name` (req), `new_name` (req) | Changes the name of a registered model. |
+| `/api/models/delete` | `DELETE` | `name` (req) | Deletes a registered model and all its versions. |
+
+---
+
+### **Model Versions**
+
+| Endpoint | Method | Parameters (JSON / Query) | Description |
+| --- | --- | --- | --- |
+| `/api/model-versions/create` | `POST` | `name` (req), `source` (req), `run_id` | Creates a new version for a registered model. |
+| `/api/model-versions/transition-stage` | `POST` | `name` (req), `version` (req), `stage` (req) | Transitions a model version to a new stage (e.g., Staging, Production). |
+
+---
+
+### **Artifacts**
+
+| Endpoint | Method | Parameters (JSON / Query) | Description |
+| --- | --- | --- | --- |
+| `/api/artifacts/list` | `GET` | `run_id` (req), `path` | Lists the artifacts stored for a specific run at the given path. |
+
+---
+
+### **Error Responses**
+
+All endpoints return a **400 Bad Request** status if a required parameter is missing, with a JSON body:
+
+```json
+{
+  "error": "'parameter_name' is required"
+}
+
+```
+
+Internal server errors or MLflow communication issues return a **500 Internal Server Error**.
 
 ## MLflow Integration
 
