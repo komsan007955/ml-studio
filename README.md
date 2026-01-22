@@ -52,7 +52,6 @@ Ultimately, ML Studio transforms an open-source tool into a secure, consistent, 
 According to the architecture diagram, there are 3 applications running in ML Studio system:
 
 - **ML Studio application:** having React application as the frontend interacting Flask server as the backend
-- **Cerberus application:** having Flask server as the source of APIs accessing MySQL database
 - **MLflow application:** having MLflow tracking server as the source of APIs accessing PostgreSQL database
 
 Users can interact with ML Studio via either ML Studio application or notebooks. Each user interface can interact with Cerberus to operate some process related to user access control. Besides, both user interfaces are connected to MLflow application to access some assets in MLflow.
