@@ -19,12 +19,14 @@
   - [Project Structure](#project-structure)
     - [Notable Files](#notable-files)
   - [API Documentation](#api-documentation)
-    - [**Experiments**](#experiments)
-    - [**Runs**](#runs)
-    - [**Model Registry**](#model-registry)
-    - [**Model Versions**](#model-versions)
-    - [**Artifacts**](#artifacts)
-    - [**Error Responses**](#error-responses)
+    - [**Experiments API**](#experiments-api)
+    - [**Runs API**](#runs-api)
+    - [**Registered Models API**](#registered-models-api)
+    - [**Model Versions API**](#model-versions-api)
+    - [**Artifacts API**](#artifacts-api)
+    - [**Standard Response Formats**](#standard-response-formats)
+      - [**Success (200 OK)**](#success-200-ok)
+      - [**Client Error (400 Bad Request)**](#client-error-400-bad-request)
   - [MLflow Integration](#mlflow-integration)
   - [Development \& Testing](#development--testing)
   - [Known Issues \& Troubleshooting](#known-issues--troubleshooting)
@@ -251,65 +253,100 @@ Focusing on `app` as the main directory, we can see 5 sub-directories representi
 
 ## API Documentation
 
-ML Studio provides a RESTful API layer that acts as a bridge between the frontend and the MLflow Tracking Server. This documentation outlines the available endpoints for managing experiments, runs, models, and artifacts.
+ML Studio provides a RESTful API layer that bridges the **React Dashboard** with the **MLflow Tracking Server** and **Model Registry**. This section serves as the full reference for all available endpoints.
 
-### **Experiments**
+### **Experiments API**
 
-| Endpoint | Method | Parameters (JSON / Query) | Description |
+Manage high-level containers for machine learning projects.
+
+| Endpoint | Method | Parameters | Description |
 | --- | --- | --- | --- |
-| `/api/experiments/create` | `POST` | `name` (req), `artifact_location`, `tags` | Creates a new MLflow experiment. |
-| `/api/experiments/search` | `POST` | `max_results`, `filter`, `view_type`, `order_by` | Searches for experiments matching specific criteria. |
-| `/api/experiments/get` | `GET` | `experiment_id` (req) | Retrieves metadata for a specific experiment. |
-| `/api/experiments/get-by-name` | `GET` | `experiment_name` (req) | Retrieves experiment metadata using its unique name. |
-| `/api/experiments/update` | `POST` | `experiment_id` (req), `new_name` (req) | Renames an existing experiment. |
-| `/api/experiments/delete` | `POST` | `experiment_id` (req) | Marks an experiment for deletion. |
-| `/api/experiments/restore` | `POST` | `experiment_id` (req) | Restores an experiment marked for deletion. |
+| `/api/experiments/create` | `POST` | `name` (req), `artifact_location`, `tags` | Create a new experiment. |
+| `/api/experiments/search` | `POST` | `max_results`, `filter`, `view_type`, `order_by` | Search experiments using SQL-like filters. |
+| `/api/experiments/get` | `GET` | `experiment_id` (req) | Fetch metadata for a specific ID. |
+| `/api/experiments/get-by-name` | `GET` | `experiment_name` (req) | Fetch metadata using the unique name. |
+| `/api/experiments/update` | `POST` | `experiment_id` (req), `new_name` (req) | Rename an existing experiment. |
+| `/api/experiments/delete` | `POST` | `experiment_id` (req) | Mark an experiment for deletion. |
+| `/api/experiments/restore` | `POST` | `experiment_id` (req) | Restore a deleted experiment. |
+| `/api/experiments/set-tag` | `POST` | `experiment_id` (req), `key` (req), `value` (req) | Set a tag on an experiment. |
+| `/api/experiments/delete-tag` | `POST` | `experiment_id` (req), `key` (req) | Remove a tag from an experiment. |
 
 ---
 
-### **Runs**
+### **Runs API**
 
-| Endpoint | Method | Parameters (JSON / Query) | Description |
+Interact with individual execution instances and their data.
+
+| Endpoint | Method | Parameters | Description |
 | --- | --- | --- | --- |
-| `/api/runs/search` | `POST` | `experiment_ids` (req), `filter`, `max_results` | Searches for runs within specific experiments. |
-| `/api/runs/get` | `GET` | `run_id` (req) | Retrieves detailed metadata and data for a specific run. |
-| `/api/runs/update` | `POST` | `run_id` (req), `status`, `run_name` | Updates the status or name of a specific run. |
-| `/api/runs/delete` | `POST` | `run_id` (req) | Deletes a specific run. |
-| `/api/metrics/get-history` | `GET` | `run_id` (req), `metric_key` (req) | Retrieves the full history of a specific metric for a run. |
+| `/api/runs/search` | `POST` | `experiment_ids` (req), `filter`, `max_results` | Query runs across multiple experiments. |
+| `/api/runs/get` | `GET` | `run_id` (req) | Get full details (params, metrics, tags). |
+| `/api/runs/update` | `POST` | `run_id` (req), `status`, `run_name` | Update run status or rename a run. |
+| `/api/runs/delete` | `POST` | `run_id` (req) | Delete a specific run. |
+| `/api/runs/restore` | `POST` | `run_id` (req) | Restore a deleted run. |
+| `/api/runs/set-tag` | `POST` | `run_id` (req), `key` (req), `value` (req) | Set a tag on a specific run. |
+| `/api/runs/delete-tag` | `POST` | `run_id` (req), `key` (req) | Delete a tag from a specific run. |
+| `/api/metrics/get-history` | `GET` | `run_id` (req), `metric_key` (req) | Fetch all logged values for a specific metric. |
 
 ---
 
-### **Model Registry**
+### **Registered Models API**
 
-| Endpoint | Method | Parameters (JSON / Query) | Description |
+Manage the lifecycle and aliases of registered models.
+
+| Endpoint | Method | Parameters | Description |
 | --- | --- | --- | --- |
-| `/api/models/create` | `POST` | `name` (req), `tags`, `description` | Registers a new model in the Model Registry. |
-| `/api/models/get` | `GET` | `name` (req) | Retrieves metadata for a registered model. |
-| `/api/models/rename` | `POST` | `name` (req), `new_name` (req) | Changes the name of a registered model. |
-| `/api/models/delete` | `DELETE` | `name` (req) | Deletes a registered model and all its versions. |
+| `/api/models/create` | `POST` | `name` (req), `tags`, `description` | Register a new model name. |
+| `/api/models/get` | `GET` | `name` (req) | Get metadata for a registered model. |
+| `/api/models/search` | `GET` | `filter`, `max_results`, `order_by` | List and search registered models. |
+| `/api/models/rename` | `POST` | `name` (req), `new_name` (req) | Change the name of a registered model. |
+| `/api/models/update` | `PATCH` | `name` (req), `description`, `deployment_job_id` | Update model metadata. |
+| `/api/models/delete` | `DELETE` | `name` (req) | Remove a model and all versions. |
+| `/api/models/set-tag` | `POST` | `name` (req), `key` (req), `value` (req) | Set a tag for a registered model. |
+| `/api/models/delete-tag` | `DELETE` | `name` (req), `key` (req) | Delete a tag for a registered model. |
+| `/api/models/alias` | `POST/DELETE` | `name` (req), `alias` (req), `version` | Set or delete a model version alias. |
 
 ---
 
-### **Model Versions**
+### **Model Versions API**
 
-| Endpoint | Method | Parameters (JSON / Query) | Description |
+Track specific iterations and transition them through stages.
+
+| Endpoint | Method | Parameters | Description |
 | --- | --- | --- | --- |
-| `/api/model-versions/create` | `POST` | `name` (req), `source` (req), `run_id` | Creates a new version for a registered model. |
-| `/api/model-versions/transition-stage` | `POST` | `name` (req), `version` (req), `stage` (req) | Transitions a model version to a new stage (e.g., Staging, Production). |
+| `/api/models/versions/latest` | `POST` | `name` (req), `stages` | Get the latest versions for specific stages. |
+| `/api/models/versions/create` | `POST` | `name` (req), `source` (req), `run_id` | Log a new version of a model. |
+| `/api/models/versions/get` | `GET` | `name` (req), `version` (req) | Get details for a specific version. |
+| `/api/models/versions/get-by-alias` | `GET` | `name` (req), `alias` (req) | Fetch a version via its assigned alias. |
+| `/api/models/versions/search` | `GET` | `filter`, `max_results` | Search through model versions. |
+| `/api/models/versions/update` | `PATCH` | `name` (req), `version` (req), `description` | Update version description. |
+| `/api/models/versions/transition` | `POST` | `name`, `version`, `stage` (req) | Move to `Staging`, `Production`, etc. |
+| `/api/models/versions/download-uri` | `GET` | `name` (req), `version` (req) | Get the URI to download model artifacts. |
+| `/api/models/versions/delete` | `DELETE` | `name` (req), `version` (req) | Delete a specific model version. |
+| `/api/models/versions/set-tag` | `POST` | `name`, `version`, `key`, `value` | Set a tag for a model version. |
+| `/api/models/versions/delete-tag` | `DELETE` | `name`, `version`, `key` | Delete a tag from a model version. |
 
 ---
 
-### **Artifacts**
+### **Artifacts API**
 
-| Endpoint | Method | Parameters (JSON / Query) | Description |
+Browse files generated during execution.
+
+| Endpoint | Method | Parameters | Description |
 | --- | --- | --- | --- |
-| `/api/artifacts/list` | `GET` | `run_id` (req), `path` | Lists the artifacts stored for a specific run at the given path. |
+| `/api/artifacts/list` | `GET` | `run_id` (req), `path` | List files in a specific artifact directory. |
 
 ---
 
-### **Error Responses**
+### **Standard Response Formats**
 
-All endpoints return a **400 Bad Request** status if a required parameter is missing, with a JSON body:
+#### **Success (200 OK)**
+
+Returns the JSON object directly from the internal `fn` (MLflow) logic.
+
+#### **Client Error (400 Bad Request)**
+
+Returned when required parameters are missing.
 
 ```json
 {
@@ -317,8 +354,6 @@ All endpoints return a **400 Bad Request** status if a required parameter is mis
 }
 
 ```
-
-Internal server errors or MLflow communication issues return a **500 Internal Server Error**.
 
 ## MLflow Integration
 
