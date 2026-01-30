@@ -1,4 +1,45 @@
 services:
+  # The Flask App
+  web:
+    build:
+      context: .
+      args:
+        - APP_NAME=cerberus
+    image: cerberus-api
+    ports:
+      - "5000:5000"
+    environment:
+      MYSQL_HOST: db 
+      MYSQL_USER: blendata
+      MYSQL_PASSWORD: "#########"
+      MYSQL_DATABASE: auth
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # The MySQL Database
+  db:
+    image: cerberus-db
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "#########"
+      MYSQL_DATABASE: auth
+      MYSQL_USER: blendata
+      MYSQL_PASSWORD: "#########"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p'#########'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  
   # PostgreSQL for MLflow Metadata
   pg-db:
     image: postgres:15
@@ -58,6 +99,9 @@ services:
       - CI=true
     stdin_open: true 
     tty: true
+    volumes:
+      - ./app/ui:/app
+      - /app/node_modules
 
 volumes:
   mysql_data:
