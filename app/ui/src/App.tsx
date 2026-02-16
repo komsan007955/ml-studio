@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutGrid, Database, Filter, Search, Code2, BookOpen, Calculator, 
-  BarChart3, Table2, Monitor, Settings, ChevronLeft, ChevronRight, 
-  MoreVertical, Download, Waypoints, Bell, Info, Layout, Share2, 
+  LayoutGrid, Database, Filter, Search, Code2, BookOpen, Calculator,
+  BarChart3, Table2, Monitor, Settings, ChevronLeft, ChevronRight,
+  MoreVertical, Download, Waypoints, Bell, Info, Layout, Share2,
   RefreshCw, List, Copy, FolderTree, File, Maximize2, X, Minimize2,
   SlidersHorizontal, ChevronDown, FlaskConical, CirclePlus, PencilLine,
   Plus, Trash2, Pencil, Check
@@ -43,10 +43,11 @@ interface ExperimentData {
   artifact_location: string;
   created_by?: string;
   created_at?: string;
+  last_updated?: string;
   deleted_by?: string;
   deleted_at?: string;
   tags?: ExperimentTag[];
-  description?: string;      
+  description?: string;
 }
 
 interface CreateExperimentDialogProps {
@@ -96,23 +97,23 @@ interface ArtifactPermissions {
 // ============================================================================
 
 const MOCK_RUNS: RunData[] = [
-  { 
-    id: '1', runName: 'luxuriant-yak-214', runId: '1f899ed35c194ce0af63ec8470606e96', 
-    color: 'orange', created: '8 days ago', duration: '56.5s', datasets: '-', 
-    user: 'chaiya', source: 'zeppelin_python.py', models: 'fraud_predictor:v5', 
-    f1: '1', agg_depth: '2', threshold: '0.5' 
+  {
+    id: '1', runName: 'luxuriant-yak-214', runId: '1f899ed35c194ce0af63ec8470606e96',
+    color: 'orange', created: '8 days ago', duration: '56.5s', datasets: '-',
+    user: 'chaiya', source: 'zeppelin_python.py', models: 'fraud_predictor:v5',
+    f1: '1', agg_depth: '2', threshold: '0.5'
   },
-  { 
-    id: '2', runName: 'caring-hog-2', runId: 'b4ef74f0e61a4237b440cb56e7b060f1', 
-    color: 'teal', created: '18 days ago', duration: '58.4s', datasets: '-', 
-    user: 'saelee', source: 'zeppelin_python.py', models: 'fraud_predictor:v3', 
-    f1: '0.995206', agg_depth: '2', threshold: '0.5' 
+  {
+    id: '2', runName: 'caring-hog-2', runId: 'b4ef74f0e61a4237b440cb56e7b060f1',
+    color: 'teal', created: '18 days ago', duration: '58.4s', datasets: '-',
+    user: 'saelee', source: 'zeppelin_python.py', models: 'fraud_predictor:v3',
+    f1: '0.995206', agg_depth: '2', threshold: '0.5'
   },
-  { 
-    id: '3', runName: 'victorious-elk-937', runId: 'a7c88ef0e61a4237b440cb56e7b060f1', 
-    color: 'green', created: '21 days ago', duration: '1.4min', datasets: '-', 
-    user: 'jkasem', source: 'zeppelin_python.py', models: 'fraud_predictor:v1', 
-    f1: '0.992430', agg_depth: '2', threshold: '-' 
+  {
+    id: '3', runName: 'victorious-elk-937', runId: 'a7c88ef0e61a4237b440cb56e7b060f1',
+    color: 'green', created: '21 days ago', duration: '1.4min', datasets: '-',
+    user: 'jkasem', source: 'zeppelin_python.py', models: 'fraud_predictor:v1',
+    f1: '0.992430', agg_depth: '2', threshold: '-'
   },
 ];
 
@@ -124,12 +125,13 @@ const MOCK_MODELS: ModelData[] = [
 ];
 
 const MOCK_EXPERIMENTS: ExperimentData[] = [
-  { 
-    experiment_id: '1', 
-    name: 'demo_fraud_train', 
+  {
+    experiment_id: '1',
+    name: 'demo_fraud_train',
     artifact_location: '/data/zeus/mlflow/mlartifacts/1',
     created_by: 'chaiya',
     created_at: '2026-01-01T10:00:00Z',
+    last_updated: '2026-02-15T14:32:21Z',
     description: 'Fraud detection model training experiment',
     tags: [
       { key: 'team', value: 'data-science', created_by: 'chaiya', created_at: '2026-01-01T10:00:00Z' },
@@ -137,24 +139,26 @@ const MOCK_EXPERIMENTS: ExperimentData[] = [
       { key: 'environment', value: 'production', created_by: 'chaiya', created_at: '2026-01-01T10:00:00Z' }
     ]
   },
-  { 
-    experiment_id: '2', 
-    name: 'churn_prediction', 
+  {
+    experiment_id: '2',
+    name: 'churn_prediction',
     artifact_location: '/data/zeus/mlflow/mlartifacts/2',
     created_by: 'saelee',
     created_at: '2026-01-15T14:20:00Z',
+    last_updated: '2026-02-15T14:32:21Z',
     description: 'Customer churn prediction model',
     tags: [
       { key: 'team', value: 'analytics', created_by: 'saelee', created_at: '2026-01-15T14:20:00Z' },
       { key: 'priority', value: 'high', created_by: 'saelee', created_at: '2026-01-15T14:20:00Z' }
     ]
   },
-  { 
-    experiment_id: '3', 
-    name: 'customer_segmentation', 
+  {
+    experiment_id: '3',
+    name: 'customer_segmentation',
     artifact_location: '/data/zeus/mlflow/mlartifacts/3',
     created_by: 'jkasem',
     created_at: '2026-01-20T09:15:00Z',
+    last_updated: '2026-02-15T14:32:21Z',
     description: 'RFM customer segmentation',
     tags: [
       { key: 'team', value: 'marketing', created_by: 'jkasem', created_at: '2026-01-20T09:15:00Z' },
@@ -165,41 +169,43 @@ const MOCK_EXPERIMENTS: ExperimentData[] = [
 ];
 
 const MOCK_SOFT_DELETED_EXPERIMENTS: ExperimentData[] = [
-  { 
-    experiment_id: '4', 
-    name: 'demo_fraud_train', 
+  {
+    experiment_id: '4',
+    name: 'demo_fraud_train',
     artifact_location: '/data/zeus/mlflow/mlartifacts/4',
     created_by: 'chaiya',
     created_at: '2026-01-01T10:00:00Z',
+    last_updated: '2026-02-15T14:32:21Z',
     deleted_by: 'chaiya',
     deleted_at: '2026-02-10T10:30:00Z'
   },
-  { 
-    experiment_id: '5', 
-    name: 'old_experiment', 
+  {
+    experiment_id: '5',
+    name: 'old_experiment',
     artifact_location: '/data/zeus/mlflow/mlartifacts/5',
     created_by: 'beatrice',
     created_at: '2026-01-15T14:20:00Z',
+    last_updated: '2026-02-15T14:32:21Z',
     deleted_by: 'beatrice',
     deleted_at: '2026-02-09T15:45:00Z'
   },
 ];
 
 const RECENT_UPDATES = [
-  { 
-    title: 'test_dashboard', description: 'No dashboard Description', 
-    modifiedBy: 'beatrice', date: '19/06/2025 22:44:24', 
-    icon: <BarChart3 size={14} />, imageUrl: '/dash-list.png' 
+  {
+    title: 'test_dashboard', description: 'No dashboard Description',
+    modifiedBy: 'beatrice', date: '19/06/2025 22:44:24',
+    icon: <BarChart3 size={14} />, imageUrl: '/dash-list.png'
   },
-  { 
-    title: 'test_app', description: 'No application Description', 
-    modifiedBy: 'beatrice', date: '19/06/2025 22:12:41', 
-    icon: <Layout size={14} />, imageUrl: '/app-list.png' 
+  {
+    title: 'test_app', description: 'No application Description',
+    modifiedBy: 'beatrice', date: '19/06/2025 22:12:41',
+    icon: <Layout size={14} />, imageUrl: '/app-list.png'
   },
-  { 
-    title: 'quickstart_tut', description: 'No project Description', 
-    modifiedBy: 'beatrice', date: '19/06/2025 22:11:23', 
-    icon: <Database size={14} />, imageUrl: '/project-list.png' 
+  {
+    title: 'quickstart_tut', description: 'No project Description',
+    modifiedBy: 'beatrice', date: '19/06/2025 22:11:23',
+    icon: <Database size={14} />, imageUrl: '/project-list.png'
   }
 ];
 
@@ -314,9 +320,9 @@ const FilterButton: React.FC<{ label: string; icon?: React.ReactNode }> = ({ lab
   </button>
 );
 
-const SearchInput: React.FC<{ placeholder: string; className?: string }> = ({ 
-  placeholder, 
-  className = "w-64" 
+const SearchInput: React.FC<{ placeholder: string; className?: string }> = ({
+  placeholder,
+  className = "w-64"
 }) => (
   <div className={`relative ${className}`}>
     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
@@ -332,9 +338,9 @@ const CopyButton: React.FC<{ text?: string }> = ({ text }) => (
   <Copy size={10} className="text-gray-300 cursor-pointer hover:text-orange-500" onClick={() => text && navigator.clipboard?.writeText(text)} />
 );
 
-const Badge: React.FC<{ children: React.ReactNode; variant?: 'blue' | 'green' | 'purple' | 'gray' }> = ({ 
-  children, 
-  variant = 'gray' 
+const Badge: React.FC<{ children: React.ReactNode; variant?: 'blue' | 'green' | 'purple' | 'gray' }> = ({
+  children,
+  variant = 'gray'
 }) => {
   const variants = {
     blue: 'bg-blue-50 text-blue-600 border-blue-100',
@@ -342,7 +348,7 @@ const Badge: React.FC<{ children: React.ReactNode; variant?: 'blue' | 'green' | 
     purple: 'bg-purple-100 text-purple-700 border-purple-200',
     gray: 'bg-gray-100 text-gray-500 border-gray-200'
   };
-  
+
   return (
     <span className={`px-2 py-0.5 rounded border text-[9px] font-bold ${variants[variant]}`}>
       {children}
@@ -466,16 +472,15 @@ const SnapshotDrawer: React.FC<{
 
   return (
     <>
-      <div 
+      <div
         className="fixed inset-0 w-full h-full bg-black/40 backdrop-blur-[2px] z-[90] transition-opacity duration-300"
-        onClick={onClose} 
+        onClick={onClose}
       />
-      <div 
-        className={`fixed bg-white shadow-2xl border border-gray-100 transition-all duration-300 ease-out z-[100] flex flex-col overflow-hidden ${
-          isExpanded 
-            ? 'top-0 left-0 w-full h-full rounded-none' 
-            : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-6xl h-auto max-h-[85vh] rounded-[32px]'
-        }`}
+      <div
+        className={`fixed bg-white shadow-2xl border border-gray-100 transition-all duration-300 ease-out z-[100] flex flex-col overflow-hidden ${isExpanded
+          ? 'top-0 left-0 w-full h-full rounded-none'
+          : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-6xl h-auto max-h-[85vh] rounded-[32px]'
+          }`}
       >
         <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
@@ -492,14 +497,14 @@ const SnapshotDrawer: React.FC<{
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={onToggleExpand} 
+            <button
+              onClick={onToggleExpand}
               className="p-2.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
             >
               {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
             </button>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
             >
               <X size={24} />
@@ -517,9 +522,8 @@ const SnapshotDrawer: React.FC<{
                 <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-gray-100" />
                 {[5, 4, 3].map((v) => (
                   <div key={v} className="relative flex items-start gap-4 group cursor-pointer">
-                    <div className={`w-4 h-4 rounded-full border-2 border-white z-10 mt-1 transition-colors ${
-                      v === 5 ? 'bg-orange-500 shadow-md shadow-orange-200' : 'bg-gray-300 group-hover:bg-orange-300'
-                    }`} />
+                    <div className={`w-4 h-4 rounded-full border-2 border-white z-10 mt-1 transition-colors ${v === 5 ? 'bg-orange-500 shadow-md shadow-orange-200' : 'bg-gray-300 group-hover:bg-orange-300'
+                      }`} />
                     <div>
                       <div className="text-xs font-bold text-gray-800">Version {v}</div>
                       <div className="text-[10px] text-gray-400">Deployed 2 days ago</div>
@@ -550,7 +554,7 @@ const SnapshotDrawer: React.FC<{
           <button onClick={onClose} className="px-6 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700">
             Dismiss
           </button>
-          <button 
+          <button
             onClick={onFullView}
             className="px-8 py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow-xl shadow-gray-200 hover:bg-black transition-all"
           >
@@ -621,7 +625,7 @@ const ModelsRegistryView: React.FC<{ onSelectModel: (name: string) => void }> = 
                 </td>
                 <td className="px-4 py-3">
                   {model.latest !== '—' ? (
-                    <span 
+                    <span
                       onClick={() => setActiveSnapshot(`${model.name}:${model.latest}`)}
                       className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 font-bold text-[10px] cursor-pointer hover:bg-blue-100 transition-colors"
                     >
@@ -631,7 +635,7 @@ const ModelsRegistryView: React.FC<{ onSelectModel: (name: string) => void }> = 
                 </td>
                 <td className="px-4 py-3">
                   {model.alias !== '—' ? (
-                    <span 
+                    <span
                       onClick={() => setActiveSnapshot(`${model.name}:${model.alias}`)}
                       className="px-2 py-0.5 bg-green-50 text-green-600 rounded border border-green-100 font-bold text-[10px] cursor-pointer hover:bg-green-100 transition-colors"
                     >
@@ -651,10 +655,10 @@ const ModelsRegistryView: React.FC<{ onSelectModel: (name: string) => void }> = 
           </tbody>
         </table>
       </div>
-      
-      <SnapshotDrawer 
-        modelName={activeSnapshot} 
-        isOpen={!!activeSnapshot} 
+
+      <SnapshotDrawer
+        modelName={activeSnapshot}
+        isOpen={!!activeSnapshot}
         isExpanded={isSnapshotExpanded}
         onClose={handleSnapshotClose}
         onToggleExpand={() => setIsSnapshotExpanded(!isSnapshotExpanded)}
@@ -821,7 +825,7 @@ const CreateExperimentDialog: React.FC<CreateExperimentDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    
+
     // Validate required field
     if (!experimentName.trim()) {
       setError('Experiment name is required');
@@ -834,7 +838,7 @@ const CreateExperimentDialog: React.FC<CreateExperimentDialogProps> = ({
     try {
       // Validate experiment name uniqueness
       const validation = await validateExperimentName(experimentName.trim());
-      
+
       if (!validation.isValid) {
         setError(validation.error || 'Invalid experiment name');
         setIsLoading(false);
@@ -857,10 +861,10 @@ const CreateExperimentDialog: React.FC<CreateExperimentDialogProps> = ({
 
       // Create new experiment
       await onCreateExperiment(
-        experimentName.trim(), 
+        experimentName.trim(),
         artifactLocation.trim() || undefined
       );
-      
+
       handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create experiment. Please try again.');
@@ -874,11 +878,11 @@ const CreateExperimentDialog: React.FC<CreateExperimentDialogProps> = ({
   return (
     <>
       {/* Overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[100] transition-opacity duration-300"
         onClick={handleClose}
       />
-      
+
       {/* Dialog */}
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl z-[110] overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
@@ -888,7 +892,7 @@ const CreateExperimentDialog: React.FC<CreateExperimentDialogProps> = ({
             </div>
             <h2 className="text-lg font-bold text-gray-900">Create New Experiment</h2>
           </div>
-          <button 
+          <button
             onClick={handleClose}
             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
             disabled={isLoading}
@@ -913,11 +917,10 @@ const CreateExperimentDialog: React.FC<CreateExperimentDialogProps> = ({
                 }}
                 onBlur={() => setTouched(true)}
                 placeholder="e.g., customer_churn_prediction"
-                className={`w-full px-4 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                  error && touched && !experimentName.trim()
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
-                    : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'
-                }`}
+                className={`w-full px-4 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 transition-all ${error && touched && !experimentName.trim()
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                  : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'
+                  }`}
                 disabled={isLoading}
                 autoFocus
               />
@@ -975,8 +978,8 @@ const CreateExperimentDialog: React.FC<CreateExperimentDialogProps> = ({
                   </div>
                   <div className="flex-1">
                     <p className="text-xs text-yellow-800">
-                      An experiment with this name was previously deleted. 
-                      {currentUserId === 'beatrice' 
+                      An experiment with this name was previously deleted.
+                      {currentUserId === 'beatrice'
                         ? ' You can reuse this name - the old experiment will be permanently deleted.'
                         : ' This name cannot be reused because it was deleted by another user.'}
                     </p>
@@ -1017,6 +1020,278 @@ const CreateExperimentDialog: React.FC<CreateExperimentDialogProps> = ({
 
 };
 
+
+// ============================================================================
+// RENAME EXPERIMENT DIALOG
+// ============================================================================
+
+interface RenameExperimentDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  experiment: ExperimentData | null;
+  onRename: (newName: string) => Promise<void>;
+  currentUserId: string;
+}
+
+const RenameExperimentDialog: React.FC<RenameExperimentDialogProps> = ({
+  isOpen,
+  onClose,
+  experiment,
+  onRename,
+  currentUserId
+}) => {
+  const [newName, setNewName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+
+  useEffect(() => {
+    if (experiment) {
+      setNewName(experiment.name);
+    }
+  }, [experiment]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setTimeout(() => {
+        setNewName('');
+        setError(null);
+        setTouched(false);
+        setIsLoading(false);
+      }, 200);
+    }
+  }, [isOpen]);
+
+  const validateExperimentName = async (name: string): Promise<ExperimentValidationResult> => {
+    // Same validation as create: check active experiments except current one
+    const activeExperimentExists = MOCK_EXPERIMENTS.some(
+      exp => exp.name.toLowerCase() === name.toLowerCase() && exp.experiment_id !== experiment?.experiment_id
+    );
+
+    if (activeExperimentExists) {
+      return {
+        isValid: false,
+        error: `An active experiment with name "${name}" already exists. Please choose a different name.`
+      };
+    }
+
+    // Check soft-deleted experiments
+    const softDeleted = MOCK_SOFT_DELETED_EXPERIMENTS.find(
+      exp => exp.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (softDeleted) {
+      if (softDeleted.deleted_by !== currentUserId) {
+        return {
+          isValid: false,
+          error: `An experiment with name "${name}" was previously deleted by another user (${softDeleted.deleted_by}). You cannot reuse this name.`
+        };
+      }
+      // Soft-deleted owned by current user – can be permanently deleted later if needed
+      return {
+        isValid: true,
+        softDeletedExperiment: softDeleted
+      };
+    }
+
+    return { isValid: true };
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+
+    if (!newName.trim()) {
+      setError('Experiment name is required');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const validation = await validateExperimentName(newName.trim());
+      if (!validation.isValid) {
+        setError(validation.error || 'Invalid experiment name');
+        setIsLoading(false);
+        return;
+      }
+
+      // If there's a soft-deleted experiment owned by this user, we could hard delete it first
+      // (similar to creation), but for simplicity we'll just rename and let the backend handle it.
+      // In a real app you might want to prompt the user or automatically purge it.
+
+      await onRename(newName.trim());
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to rename experiment. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen || !experiment) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[200]" onClick={onClose} />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-[210] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Pencil size={18} className="text-orange-600" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Rename Experiment</h2>
+          </div>
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg" disabled={isLoading}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                New Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => {
+                  setNewName(e.target.value);
+                  if (touched) setError(null);
+                }}
+                onBlur={() => setTouched(true)}
+                placeholder="e.g., customer_churn_v2"
+                className={`w-full px-4 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 transition-all ${error && touched && !newName.trim()
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                    : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'
+                  }`}
+                disabled={isLoading}
+                autoFocus
+              />
+              {error && touched && !newName.trim() && (
+                <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                  <Info size={12} />
+                  Experiment name is required
+                </p>
+              )}
+            </div>
+
+            {error && touched && newName.trim() && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Info size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-700 whitespace-pre-wrap">{error}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !newName.trim()}
+              className="px-6 py-2 bg-orange-500 text-white text-xs font-bold rounded-lg hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2"
+            >
+              {isLoading ? <RefreshCw size={14} className="animate-spin" /> : 'Rename'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+};
+
+// ============================================================================
+// DESCRIPTION EDIT POPUP
+// ============================================================================
+
+interface DescriptionEditPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  description: string;
+  onSave: (newDescription: string) => Promise<void>;
+}
+
+const DescriptionEditPopup: React.FC<DescriptionEditPopupProps> = ({
+  isOpen,
+  onClose,
+  description,
+  onSave
+}) => {
+  const [editedDesc, setEditedDesc] = useState(description);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      await onSave(editedDesc);
+      onClose();
+    } catch (err) {
+      setError('Failed to save description. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[200]" onClick={onClose} />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl z-[210] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900">Edit Description</h3>
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-6">
+          <textarea
+            value={editedDesc}
+            onChange={(e) => setEditedDesc(e.target.value)}
+            rows={4}
+            className="w-full px-3 py-2 text-sm border bg-white rounded-lg focus:outline-none focus:border-orange-500"
+            placeholder="Enter experiment description..."
+          />
+          {error && (
+            <p className="mt-2 text-xs text-red-500 flex items-center gap-1">
+              <Info size={12} /> {error}
+            </p>
+          )}
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-4 py-2 bg-orange-500 text-white text-xs font-bold rounded-lg hover:bg-orange-600 flex items-center gap-2"
+            >
+              {isSaving ? <RefreshCw size={12} className="animate-spin" /> : 'Save'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 // ============================================================================
 // ARTIFACT DELETION DIALOG COMPONENT
 // ============================================================================
@@ -1036,7 +1311,7 @@ const DeleteArtifactDialog: React.FC<DeleteArtifactDialogProps> = ({
   selectedArtifacts,
   isDeleting
 }) => {
-if (!isOpen) return null;
+  if (!isOpen) return null;
 
   const fileCount = selectedArtifacts.filter(a => a.type === 'file').length;
   const dirCount = selectedArtifacts.filter(a => a.type === 'directory').length;
@@ -1045,21 +1320,21 @@ if (!isOpen) return null;
   const getDescription = () => {
     if (totalItems === 1) {
       const artifact = selectedArtifacts[0];
-      return artifact.type === 'directory' 
-        ? `the directory "${artifact.name}" and all its contents` 
+      return artifact.type === 'directory'
+        ? `the directory "${artifact.name}" and all its contents`
         : `the file "${artifact.name}"`;
     }
-    
+
     const parts = [];
     if (dirCount > 0) parts.push(`${dirCount} director${dirCount > 1 ? 'ies' : 'y'}`);
     if (fileCount > 0) parts.push(`${fileCount} file${fileCount > 1 ? 's' : ''}`);
-    
+
     return `${parts.join(' and ')} (${totalItems} item${totalItems > 1 ? 's' : ''})`;
   };
 
   return (
     <>
-      <div 
+      <div
         className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[200] transition-opacity duration-300"
         onClick={onClose}
       />
@@ -1071,7 +1346,7 @@ if (!isOpen) return null;
             </div>
             <h2 className="text-lg font-bold text-gray-900">Delete Artifacts</h2>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
             disabled={isDeleting}
@@ -1167,19 +1442,33 @@ if (!isOpen) return null;
 // EXPERIMENTS COMPONENTS
 // ============================================================================
 
-const ExperimentSidebar: React.FC<{ 
-  experiments: ExperimentData[]; 
-  selectedId: string; 
+// ============================================================================
+// EXPERIMENTS COMPONENTS
+// ============================================================================
+
+const ExperimentSidebar: React.FC<{
+  experiments: ExperimentData[];
+  selectedId: string;
   onSelect: (id: string) => void;
   isCollapsed: boolean;
   toggle: () => void;
-    onCreateClick: () => void;
+  onCreateClick: () => void;
   isCreating?: boolean;
   currentUserId: string;
-}> = ({ experiments, selectedId, onSelect, isCollapsed, toggle, onCreateClick,                  // Add this
-  isCreating = false, currentUserId }) => (
+  onRename: (experiment: ExperimentData) => void;
+}> = ({ 
+  experiments, 
+  selectedId, 
+  onSelect, 
+  isCollapsed, 
+  toggle, 
+  onCreateClick, 
+  onRename,
+  isCreating = false, 
+  currentUserId 
+}) => (
   <div className={`flex flex-col border-r border-gray-200 transition-all duration-300 relative bg-white ${isCollapsed ? 'w-0' : 'w-72'}`}>
-    <button 
+    <button
       onClick={toggle}
       className={`absolute top-12 z-50 w-6 h-10 bg-white border border-gray-200 rounded-md flex items-center justify-center hover:bg-gray-50 shadow-sm text-gray-400 text-xs transition-all duration-300 ${
         isCollapsed ? '-right-7' : '-right-3'
@@ -1194,7 +1483,7 @@ const ExperimentSidebar: React.FC<{
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             Experiments
           </span>
-          <button 
+          <button
             onClick={onCreateClick}
             disabled={isCreating}
             className="text-gray-400 hover:text-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1226,19 +1515,19 @@ const ExperimentSidebar: React.FC<{
           </div>
         ) : (
           experiments.map((exp) => (
-            <div 
+            <div
               key={exp.experiment_id}
               onClick={() => onSelect(exp.experiment_id)}
               className={`group flex items-center justify-between px-4 py-2.5 cursor-pointer border-l-4 transition-all ${
-                selectedId === exp.experiment_id 
-                  ? 'bg-orange-50/60 border-orange-500 text-orange-500 font-medium' 
+                selectedId === exp.experiment_id
+                  ? 'bg-orange-50/60 border-orange-500 text-orange-500 font-medium'
                   : 'border-transparent text-gray-600 hover:bg-gray-50'
               }`}
             >
               <div className="flex items-center gap-3 overflow-hidden">
-                <input 
-                  type="checkbox" 
-                  className="w-3.5 h-3.5 rounded border-gray-300 bg-white text-orange-500 focus:ring-0 cursor-pointer" 
+                <input
+                  type="checkbox"
+                  className="w-3.5 h-3.5 rounded border-gray-300 bg-white text-orange-500 focus:ring-0 cursor-pointer"
                   checked={selectedId === exp.experiment_id}
                   onChange={() => onSelect(exp.experiment_id)}
                 />
@@ -1247,9 +1536,18 @@ const ExperimentSidebar: React.FC<{
                   <span className="text-[9px] text-gray-400">(owner)</span>
                 )}
               </div>
-              <div className={`flex items-center gap-1.5 ${selectedId === exp.experiment_id ? 'flex' : 'hidden group-hover:flex'}`}>
-                <Pencil size={12} className="text-gray-400 hover:text-orange-500" />
-                <Trash2 size={12} className="text-gray-400 hover:text-red-500" />
+              <div className={`flex items-center gap-1.5 ${
+                selectedId === exp.experiment_id ? 'flex' : 'hidden group-hover:flex'
+              }`}>
+                <Pencil
+                  size={12}
+                  className="text-gray-400 hover:text-orange-500 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRename(exp);
+                  }}
+                />
+                <Trash2 size={12} className="text-gray-400 hover:text-red-500 cursor-pointer" />
               </div>
             </div>
           ))
@@ -1268,447 +1566,321 @@ interface ExperimentTagsManagerProps {
   experiment: ExperimentData;
   permissions: ArtifactPermissions;
   onUpdateTags: (tags: ExperimentTag[]) => Promise<void>;
+  hideUtilitySection?: boolean;
 }
 
 const ExperimentTagsManager: React.FC<ExperimentTagsManagerProps> = ({
   experiment,
   permissions,
-  onUpdateTags
+  onUpdateTags,
+  hideUtilitySection = false
 }) => {
   const [tags, setTags] = useState<ExperimentTag[]>(experiment.tags || []);
-  const [isAddingTag, setIsAddingTag] = useState(false);
-  const [newKey, setNewKey] = useState('');
-  const [newValue, setNewValue] = useState('');
-  const [editingTag, setEditingTag] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [editableTags, setEditableTags] = useState<ExperimentTag[]>([]);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
 
   const canEdit = permissions?.permissionLevel === 'edit' || permissions?.permissionLevel === 'admin';
 
-  const handleAddTag = async () => {
-    if (!newKey.trim()) {
-      setError('Tag key is required');
-      return;
-    }
+  // Enter edit mode
+  const handleEdit = () => {
+    setEditableTags(tags.map(tag => ({ ...tag }))); // deep copy
+    setSelectedIndices(new Set());
+    setEditMode(true);
+    setError(null);
+  };
 
+  // Cancel edit
+  const handleCancel = () => {
+    setEditMode(false);
+    setEditableTags([]);
+    setSelectedIndices(new Set());
+    setError(null);
+  };
+
+  // Apply changes
+  const handleApply = async () => {
     setIsSaving(true);
     setError(null);
-
     try {
-      let updatedTags = [...tags];
-      
-      // Check if key already exists
-      const existingTagIndex = updatedTags.findIndex(t => t.key === newKey.trim());
-      
-      if (existingTagIndex !== -1) {
-        // Overwrite existing tag
-        updatedTags[existingTagIndex] = {
-          ...updatedTags[existingTagIndex],
-          value: newValue.trim() || '',
-          created_by: permissions?.permissionLevel,
-          created_at: new Date().toISOString()
-        };
-      } else {
-        // Add new tag
-        updatedTags.push({
-          key: newKey.trim(),
-          value: newValue.trim() || '',
-          created_by: permissions?.permissionLevel,
-          created_at: new Date().toISOString()
-        });
+      // Filter out any empty rows (key and value both empty)
+      const cleaned = editableTags.filter(t => t.key.trim() !== '' || t.value.trim() !== '');
+      // Ensure all tags have key (required)
+      if (cleaned.some(t => t.key.trim() === '')) {
+        setError('Tag key cannot be empty');
+        setIsSaving(false);
+        return;
       }
-
-      // Sort tags by key
-      updatedTags.sort((a, b) => a.key.localeCompare(b.key));
-      
-      setTags(updatedTags);
-      await onUpdateTags(updatedTags);
-      
-      // Reset form
-      setNewKey('');
-      setNewValue('');
-      setIsAddingTag(false);
+      await onUpdateTags(cleaned);
+      setTags(cleaned);
+      setEditMode(false);
     } catch (err) {
-      setError('Failed to save tag. Please try again.');
+      setError('Failed to save tags. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDeleteTag = async (key: string) => {
-    if (!canEdit) return;
-
-    setIsSaving(true);
-    try {
-      const updatedTags = tags.filter(t => t.key !== key);
-      setTags(updatedTags);
-      await onUpdateTags(updatedTags);
-      
-      // Remove from selection if selected
-      if (selectedTags.has(key)) {
-        const newSelection = new Set(selectedTags);
-        newSelection.delete(key);
-        setSelectedTags(newSelection);
-      }
-    } catch (err) {
-      setError('Failed to delete tag. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
+  // Add a new empty tag row
+  const handleAddRow = () => {
+    setEditableTags([
+      ...editableTags,
+      { key: '', value: '', created_by: permissions?.permissionLevel, created_at: new Date().toISOString() }
+    ]);
   };
 
-  const handleDeleteSelected = async () => {
-    if (!canEdit || selectedTags.size === 0) return;
-
-    setIsSaving(true);
-    try {
-      const updatedTags = tags.filter(t => !selectedTags.has(t.key));
-      setTags(updatedTags);
-      await onUpdateTags(updatedTags);
-      setSelectedTags(new Set());
-    } catch (err) {
-      setError('Failed to delete selected tags. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
+  // Update a tag field
+  const handleTagChange = (index: number, field: 'key' | 'value', value: string) => {
+    const updated = [...editableTags];
+    updated[index] = { ...updated[index], [field]: value };
+    setEditableTags(updated);
   };
 
-  const handleEditTag = async (key: string, newValue: string) => {
-    if (!canEdit) return;
-
-    setIsSaving(true);
-    try {
-      const updatedTags = tags.map(t => 
-        t.key === key 
-          ? { ...t, value: newValue, created_at: new Date().toISOString() }
-          : t
-      );
-      setTags(updatedTags);
-      await onUpdateTags(updatedTags);
-      setEditingTag(null);
-    } catch (err) {
-      setError('Failed to update tag. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
+  // Delete a tag row
+  const handleDeleteRow = (index: number) => {
+    const updated = editableTags.filter((_, i) => i !== index);
+    setEditableTags(updated);
+    // Also remove from selection if needed
+    const newSelected = new Set(selectedIndices);
+    newSelected.delete(index);
+    // Shift indices after deletion: adjust greater indices
+    const adjusted = new Set<number>();
+    newSelected.forEach(i => {
+      if (i < index) adjusted.add(i);
+      else if (i > index) adjusted.add(i - 1);
+    });
+    setSelectedIndices(adjusted);
   };
 
-  const handleSelectAll = () => {
-    if (selectedTags.size === tags.length) {
-      setSelectedTags(new Set());
+  // Toggle select all
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIndices(new Set(editableTags.map((_, i) => i)));
     } else {
-      setSelectedTags(new Set(tags.map(t => t.key)));
+      setSelectedIndices(new Set());
     }
   };
 
+  // Toggle single row
+  const handleSelectRow = (index: number, checked: boolean) => {
+    const newSelected = new Set(selectedIndices);
+    if (checked) {
+      newSelected.add(index);
+    } else {
+      newSelected.delete(index);
+    }
+    setSelectedIndices(newSelected);
+  };
+
+  // Clear all selected
   const handleClearAll = () => {
-    setSelectedTags(new Set());
+    setSelectedIndices(new Set());
   };
 
-  const handleApplyToAll = () => {
-    // This would be implemented based on your specific requirements
-    console.log('Apply to all experiments');
+  // Delete selected rows
+  const handleDeleteSelected = () => {
+    if (selectedIndices.size === 0) return;
+    const indicesToRemove = Array.from(selectedIndices).sort((a, b) => b - a); // descending
+    let updated = [...editableTags];
+    indicesToRemove.forEach(i => {
+      updated = updated.filter((_, idx) => idx !== i);
+    });
+    setEditableTags(updated);
+    setSelectedIndices(new Set());
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Header with actions */}
-      <div className="flex items-center justify-between">
-        <h4 className="text-xs font-bold text-gray-700 flex items-center gap-2">
-          <span>Experiment Tags</span>
-          {tags.length > 0 && (
-            <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[9px] font-medium">
-              {tags.length}
-            </span>
-          )}
-        </h4>
-        
-        {canEdit && (
+  // Render view mode (pills)
+  const renderViewMode = () => (
+    <div className="flex flex-wrap gap-2">
+      {tags.length > 0 ? (
+        tags.map(tag => (
+          <span
+            key={tag.key}
+            className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium border border-gray-200"
+          >
+            {tag.key}: {tag.value}
+          </span>
+        ))
+      ) : (
+        <p className="text-xs text-gray-400 italic">No tags</p>
+      )}
+      {canEdit && (
+        <button
+          onClick={handleEdit}
+          className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-600 hover:text-orange-600 border border-gray-200 rounded-full hover:border-orange-200 transition-colors"
+        >
+          <Pencil size={12} />
+          Edit Tags
+        </button>
+      )}
+    </div>
+  );
+
+  // Render edit mode (table with checkboxes)
+  const renderEditMode = () => {
+    const allSelected = editableTags.length > 0 && selectedIndices.size === editableTags.length;
+
+    return (
+      <div className="space-y-4">
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-4 py-2 w-8">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-gray-300 text-orange-500 focus:ring-orange-200"
+                  />
+                </th>
+                <th className="px-4 py-2 font-bold text-gray-500">Key</th>
+                <th className="px-4 py-2 font-bold text-gray-500">Value</th>
+                <th className="px-4 py-2 w-10"></th> {/* Delete column */}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {editableTags.map((tag, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="px-4 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIndices.has(index)}
+                      onChange={(e) => handleSelectRow(index, e.target.checked)}
+                      className="w-3.5 h-3.5 rounded border-gray-300 text-orange-500 focus:ring-orange-200"
+                    />
+                  </td>
+                  <td className="px-4 py-2">
+                    <input
+                      type="text"
+                      value={tag.key}
+                      onChange={(e) => handleTagChange(index, 'key', e.target.value)}
+                      className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:border-orange-500 bg-white"
+                      placeholder="key"
+                    />
+                  </td>
+                  <td className="px-4 py-2">
+                    <input
+                      type="text"
+                      value={tag.value}
+                      onChange={(e) => handleTagChange(index, 'value', e.target.value)}
+                      className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:border-orange-500 bg-white"
+                      placeholder="value"
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button
+                      onClick={() => handleDeleteRow(index)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete tag"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {/* Add new row */}
+              <tr className="bg-gray-50/50">
+                <td colSpan={4} className="px-4 py-2">
+                  <button
+                    onClick={handleAddRow}
+                    className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600"
+                  >
+                    <Plus size={14} />
+                    Add Tag
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {error && (
+          <p className="text-xs text-red-500 flex items-center gap-1">
+            <Info size={12} /> {error}
+          </p>
+        )}
+
+        {/* Selection actions */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {selectedTags.size > 0 && (
+            {selectedIndices.size > 0 && (
               <>
+                <span className="text-xs text-gray-500">
+                  {selectedIndices.size} selected
+                </span>
                 <button
                   onClick={handleClearAll}
-                  className="text-[10px] text-gray-500 hover:text-gray-700 px-2 py-1"
+                  className="text-xs text-gray-500 hover:text-gray-700 underline"
                 >
-                  Clear ({selectedTags.size})
+                  Clear All
                 </button>
                 <button
                   onClick={handleDeleteSelected}
-                  disabled={isSaving}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-lg border border-red-200 hover:bg-red-100 transition-all disabled:opacity-50"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded border border-red-200 hover:bg-red-100"
                 >
                   <Trash2 size={12} />
-                  Delete ({selectedTags.size})
+                  Delete Selected
                 </button>
               </>
             )}
-            
-            {!isAddingTag && (
-              <button
-                onClick={() => setIsAddingTag(true)}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-lg border border-orange-200 hover:bg-orange-100 transition-all"
-              >
-                <Plus size={12} />
-                Add Tag
-              </button>
-            )}
           </div>
-        )}
-      </div>
-
-      {/* Permission warning */}
-      {!canEdit && (
-        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2">
-            <Info size={14} className="text-gray-400" />
-            <p className="text-[10px] text-gray-500">
-              You have {permissions?.permissionLevel} access. Edit permission required to manage tags.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Add tag form */}
-      {isAddingTag && canEdit && (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">
-                Key
-              </label>
-              <input
-                type="text"
-                value={newKey}
-                onChange={(e) => setNewKey(e.target.value)}
-                placeholder="e.g., environment"
-                className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
-                autoFocus
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">
-                Value
-              </label>
-              <input
-                type="text"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-                placeholder="e.g., production"
-                className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
-              />
-            </div>
-          </div>
-          
-          {error && (
-            <p className="text-[10px] text-red-500 flex items-center gap-1">
-              <Info size={10} />
-              {error}
-            </p>
-          )}
-
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-200">
             <button
-              onClick={() => {
-                setIsAddingTag(false);
-                setNewKey('');
-                setNewValue('');
-                setError(null);
-              }}
-              className="px-3 py-1.5 text-[10px] font-bold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50"
+              onClick={handleCancel}
+              className="px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50"
               disabled={isSaving}
             >
               Cancel
             </button>
             <button
-              onClick={handleAddTag}
-              disabled={isSaving || !newKey.trim()}
-              className="px-4 py-1.5 bg-orange-500 text-white text-[10px] font-bold rounded hover:bg-orange-600 transition-all disabled:opacity-50 flex items-center gap-1"
+              onClick={handleApply}
+              disabled={isSaving}
+              className="px-4 py-2 bg-orange-500 text-white text-xs font-bold rounded hover:bg-orange-600 flex items-center gap-2"
             >
-              {isSaving ? (
-                <>
-                  <RefreshCw size={10} className="animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Add Tag'
-              )}
+              {isSaving ? <RefreshCw size={12} className="animate-spin" /> : 'Apply'}
             </button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  };
 
-      {/* Tags table */}
-      {tags.length > 0 ? (
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full text-left text-[11px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                {canEdit && (
-                  <th className="px-3 py-2 w-8">
-                    <input
-                      type="checkbox"
-                      checked={selectedTags.size === tags.length && tags.length > 0}
-                      onChange={handleSelectAll}
-                      className="w-3.5 h-3.5 rounded border-gray-300 text-orange-500 focus:ring-orange-200"
-                    />
-                  </th>
-                )}
-                <th className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Key
-                </th>
-                <th className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Value
-                </th>
-                <th className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Created By
-                </th>
-                <th className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Created At
-                </th>
-                {canEdit && (
-                  <th className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">
-                    Actions
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {tags.map((tag) => (
-                <tr key={tag.key} className="hover:bg-gray-50 transition-colors">
-                  {canEdit && (
-                    <td className="px-3 py-2.5">
-                      <input
-                        type="checkbox"
-                        checked={selectedTags.has(tag.key)}
-                        onChange={(e) => {
-                          const newSelection = new Set(selectedTags);
-                          if (e.target.checked) {
-                            newSelection.add(tag.key);
-                          } else {
-                            newSelection.delete(tag.key);
-                          }
-                          setSelectedTags(newSelection);
-                        }}
-                        className="w-3.5 h-3.5 rounded border-gray-300 text-orange-500 focus:ring-orange-200"
-                      />
-                    </td>
-                  )}
-                  <td className="px-3 py-2.5 font-medium text-gray-700">
-                    {tag.key}
-                  </td>
-                  <td className="px-3 py-2.5 text-gray-600">
-                    {editingTag === tag.key ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="text"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          className="px-2 py-1 text-[11px] border border-gray-200 rounded focus:outline-none focus:border-orange-500"
-                          autoFocus
-                        />
-                        <button
-                          onClick={() => handleEditTag(tag.key, editValue)}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
-                        >
-                          <Check size={12} />
-                        </button>
-                        <button
-                          onClick={() => setEditingTag(null)}
-                          className="p-1 text-gray-400 hover:bg-gray-100 rounded"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        {tag.value}
-                        {canEdit && (
-                          <button
-                            onClick={() => {
-                              setEditingTag(tag.key);
-                              setEditValue(tag.value);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-orange-500 transition-opacity"
-                          >
-                            <Pencil size={10} />
-                          </button>
-                        )}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 text-gray-400 text-[10px]">
-                    {tag.created_by || '—'}
-                  </td>
-                  <td className="px-3 py-2.5 text-gray-400 text-[10px]">
-                    {tag.created_at ? new Date(tag.created_at).toLocaleDateString() : '—'}
-                  </td>
-                  {canEdit && (
-                    <td className="px-3 py-2.5 text-right">
-                      <button
-                        onClick={() => handleDeleteTag(tag.key)}
-                        className="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors"
-                        title="Delete tag"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  // Permission warning (if cannot edit and no tags)
+  if (!canEdit && tags.length === 0) {
+    return (
+      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <p className="text-xs text-gray-500">No tags</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-bold text-gray-700">Tags</h4>
+        {!canEdit && (
+          <span className="text-[10px] text-gray-400">(view only)</span>
+        )}
+      </div>
+
+      {!canEdit ? (
+        // View-only mode for non-editable
+        <div className="flex flex-wrap gap-2">
+          {tags.map(tag => (
+            <span
+              key={tag.key}
+              className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs border border-gray-200"
+            >
+              {tag.key}: {tag.value}
+            </span>
+          ))}
         </div>
       ) : (
-        <div className="border border-gray-200 rounded-lg border-dashed p-8 flex flex-col items-center justify-center bg-gray-50/30">
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-            <List size={16} className="text-gray-400" />
-          </div>
-          <p className="text-[11px] text-gray-500 mb-2">No tags configured</p>
-          {canEdit && (
-            <button
-              onClick={() => setIsAddingTag(true)}
-              className="text-[10px] text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1"
-            >
-              <Plus size={12} />
-              Add your first tag
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Apply for utility section */}
-      {canEdit && tags.length > 0 && (
-        <div className="mt-4 p-3 bg-blue-50/30 rounded-lg border border-blue-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-medium text-gray-700">Apply to all:</span>
-              <label className="flex items-center gap-1.5">
-                <input
-                  type="checkbox"
-                  className="w-3.5 h-3.5 rounded border-gray-300 text-orange-500 focus:ring-orange-200"
-                />
-                <span className="text-[10px] text-gray-600">New tag</span>
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleApplyToAll}
-                className="px-3 py-1.5 bg-white border border-gray-200 text-[10px] font-bold text-gray-600 rounded hover:bg-gray-50"
-              >
-                Apply
-              </button>
-              <button
-                onClick={handleClearAll}
-                className="px-3 py-1.5 bg-white border border-gray-200 text-[10px] font-bold text-gray-600 rounded hover:bg-gray-50"
-              >
-                Clear All
-              </button>
-            </div>
-          </div>
-        </div>
+        // Editable: either view mode or edit mode
+        !editMode ? renderViewMode() : renderEditMode()
       )}
     </div>
   );
@@ -1724,9 +1896,12 @@ const ExperimentsView: React.FC = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreatingExperiment, setIsCreatingExperiment] = useState(false);
   const currentUserId = 'chaiya'; // Mock current user
+  const [isInfoExpanded, setIsInfoExpanded] = useState(true);
+  const [isDescriptionPopupOpen, setIsDescriptionPopupOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false); 
+  const [experimentToRename, setExperimentToRename] = useState<ExperimentData | null>(null);
 
-    const getPermissions = (experimentId: string): ArtifactPermissions => {
-    // Mock permission logic based on experiment ID
+  const getPermissions = (experimentId: string): ArtifactPermissions => {
     if (experimentId === '1') {
       return {
         canDelete: true,
@@ -1755,7 +1930,6 @@ const ExperimentsView: React.FC = () => {
     const loadExperiments = async () => {
       try {
         setIsLoading(true);
-        // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 500));
         setExperimentsList(MOCK_EXPERIMENTS);
         if (MOCK_EXPERIMENTS.length > 0) {
@@ -1773,6 +1947,7 @@ const ExperimentsView: React.FC = () => {
 
   const selectedRun = MOCK_RUNS.find(r => r.id === selectedRunId);
   const currentExperiment = experimentsList.find(e => e.experiment_id === selectedExperimentId);
+
   const handleCreateExperiment = async (name: string, artifactLocation?: string) => {
     setIsCreatingExperiment(true);
     try {
@@ -1793,7 +1968,22 @@ const ExperimentsView: React.FC = () => {
       setIsCreatingExperiment(false);
     }
   };
-  
+
+  const handleRenameExperiment = async (newName: string) => {
+    if (!experimentToRename) return;
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const updatedExperiments = experimentsList.map(exp =>
+      exp.experiment_id === experimentToRename.experiment_id
+        ? { ...exp, name: newName, last_updated: new Date().toISOString() }
+        : exp
+    );
+    setExperimentsList(updatedExperiments);
+    console.log(`Renamed experiment ${experimentToRename.experiment_id} to ${newName}`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex-grow flex items-center justify-center bg-white">
@@ -1806,8 +1996,8 @@ const ExperimentsView: React.FC = () => {
   }
 
   return (
-<div className="flex h-full overflow-hidden bg-white">
-      <ExperimentSidebar 
+    <div className="flex h-full overflow-hidden bg-white">
+      <ExperimentSidebar
         experiments={experimentsList}
         selectedId={selectedExperimentId}
         onSelect={setSelectedExperimentId}
@@ -1816,8 +2006,12 @@ const ExperimentsView: React.FC = () => {
         onCreateClick={() => setIsCreateDialogOpen(true)}
         isCreating={isCreatingExperiment}
         currentUserId={currentUserId}
+        onRename={(exp) => {
+          setExperimentToRename(exp);
+          setRenameDialogOpen(true);
+        }}
       />
-      
+
       <div className="flex-grow overflow-auto p-4">
         <div className="w-full">
           <div className="flex justify-between items-start mb-6">
@@ -1829,68 +2023,136 @@ const ExperimentsView: React.FC = () => {
                 <Share2 size={14} /> Share
               </button>
             </div>
-            <div className="text-[11px] text-gray-500 flex flex-col gap-1 items-end">
-              <div className="flex items-center gap-1">
-                Path: <span className="font-medium text-gray-700">{currentExperiment?.name || 'demo_fraud_train'}</span>
-                <CopyButton />
-              </div>
-              <div className="flex items-center gap-1">
-                Experiment ID: <span className="font-medium text-gray-700">{selectedExperimentId || '1'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                Artifact Location: <span className="font-medium text-gray-700 truncate max-w-xs">
-                  {currentExperiment?.artifact_location || '/data/zeus/mlflow/mlartifacts/1'}
-                </span>
-                <CopyButton />
-              </div>
-            </div>
           </div>
 
           {currentExperiment && (
             <div className="mb-6 bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="px-5 py-4 bg-gray-50/50 border-b border-gray-200 flex items-center justify-between">
+              {/* Collapsible Header */}
+              <div
+                className="px-5 py-4 bg-gray-50/50 border-b border-gray-200 flex items-center justify-between cursor-pointer"
+                onClick={() => setIsInfoExpanded(!isInfoExpanded)}
+              >
                 <div className="flex items-center gap-2">
+                  {isInfoExpanded ? (
+                    <ChevronDown size={16} className="text-gray-500" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-500" />
+                  )}
                   <Info size={14} className="text-gray-500" />
                   <h3 className="text-xs font-bold text-gray-700">Experiment Information</h3>
                 </div>
-                
-                {/* Description edit button - only for edit/admin permission */}
-                {getPermissions(selectedExperimentId).permissionLevel !== 'view' && (
-                  <button className="text-[10px] text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                {isInfoExpanded && getPermissions(selectedExperimentId).permissionLevel !== 'view' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDescriptionPopupOpen(true);
+                    }}
+                    className="text-[10px] text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                  >
                     <Pencil size={10} />
                     Edit Description
                   </button>
                 )}
               </div>
-              
-              <div className="p-5">
-                {/* Description */}
-                <div className="mb-6">
-                  <p className="text-xs text-gray-600">
-                    {currentExperiment.description || 'No description provided.'}
-                  </p>
+
+              {isInfoExpanded && (
+                <div className="p-5 space-y-5">
+                  {/* Metadata Grid */}
+                  <div className="grid grid-cols-2 gap-4 text-[11px]">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 w-24">Path:</span>
+                        <span className="text-gray-700 font-mono truncate">{currentExperiment.name}</span>
+                        <CopyButton text={currentExperiment.name} />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 w-24">Experiment ID:</span>
+                        <span className="text-gray-700 font-mono">{currentExperiment.experiment_id}</span>
+                        <CopyButton text={currentExperiment.experiment_id} />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 w-24">Artifact Location:</span>
+                        <span className="text-gray-700 font-mono truncate max-w-[200px]">{currentExperiment.artifact_location}</span>
+                        <CopyButton text={currentExperiment.artifact_location} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 w-24">Created:</span>
+                        <span className="text-gray-700">
+                          {currentExperiment.created_at
+                            ? new Date(currentExperiment.created_at).toLocaleString('en-GB', {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit'
+                              }).replace(',', '')
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 w-24">Last Updated:</span>
+                        <span className="text-gray-700">
+                          {currentExperiment.last_updated
+                            ? new Date(currentExperiment.last_updated).toLocaleString('en-GB', {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit'
+                              }).replace(',', '')
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 w-24">Lifecycle Stage:</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                          currentExperiment.deleted_at ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                        }`}>
+                          {currentExperiment.deleted_at ? 'deleted' : 'active'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-700 mb-2">Description</h4>
+                    <p className="text-xs text-gray-600 bg-gray-50 p-3 rounded border border-gray-200">
+                      {currentExperiment.description || 'No description provided.'}
+                    </p>
+                  </div>
+
+                  {/* Tags Manager */}
+                  <ExperimentTagsManager
+                    experiment={currentExperiment}
+                    permissions={getPermissions(selectedExperimentId)}
+                    onUpdateTags={async (updatedTags) => {
+                      const updatedExperiments = experimentsList.map(exp =>
+                        exp.experiment_id === currentExperiment.experiment_id
+                          ? { ...exp, tags: updatedTags, last_updated: new Date().toISOString() }
+                          : exp
+                      );
+                      setExperimentsList(updatedExperiments);
+                      console.log('Tags updated:', updatedTags);
+                    }}
+                    hideUtilitySection={true}
+                  />
                 </div>
-                
-                {/* Tags Manager */}
-                <ExperimentTagsManager
-                  experiment={currentExperiment}
-                  permissions={getPermissions(selectedExperimentId)}
-                  onUpdateTags={async (updatedTags) => {
-                    // Update the experiment with new tags
-                    const updatedExperiments = experimentsList.map(exp =>
-                      exp.experiment_id === currentExperiment.experiment_id
-                        ? { ...exp, tags: updatedTags }
-                        : exp
-                    );
-                    setExperimentsList(updatedExperiments);
-                    
-                    // In real app, make API call here
-                    console.log('Tags updated:', updatedTags);
-                  }}
-                />
-              </div>
+              )}
             </div>
           )}
+
+          {/* Description Edit Popup */}
+          <DescriptionEditPopup
+            isOpen={isDescriptionPopupOpen}
+            onClose={() => setIsDescriptionPopupOpen(false)}
+            description={currentExperiment?.description || ''}
+            onSave={async (newDesc) => {
+              const updatedExperiments = experimentsList.map(exp =>
+                exp.experiment_id === currentExperiment?.experiment_id
+                  ? { ...exp, description: newDesc, last_updated: new Date().toISOString() }
+                  : exp
+              );
+              setExperimentsList(updatedExperiments);
+              console.log('Description updated:', newDesc);
+            }}
+          />
 
           <div className="mb-4 flex flex-col gap-3">
             <div className="flex justify-between items-center">
@@ -1965,9 +2227,9 @@ const ExperimentsView: React.FC = () => {
                       }`}
                     >
                       <td className="px-4 py-3 border-r border-gray-100">
-                        <input 
-                          type="checkbox" 
-                          className="rounded text-orange-500" 
+                        <input
+                          type="checkbox"
+                          className="rounded text-orange-500"
                           checked={selectedRunId === run.id}
                           onChange={() => setSelectedRunId(run.id)}
                         />
@@ -2007,7 +2269,7 @@ const ExperimentsView: React.FC = () => {
           </div>
 
           {selectedRun && (
-            <RunDetailsPanel 
+            <RunDetailsPanel
               run={selectedRun}
               experimentId={selectedExperimentId}
               onClose={() => setSelectedRunId(null)}
@@ -2017,10 +2279,22 @@ const ExperimentsView: React.FC = () => {
           )}
         </div>
       </div>
-            <CreateExperimentDialog
+
+      <CreateExperimentDialog
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
         onCreateExperiment={handleCreateExperiment}
+        currentUserId={currentUserId}
+      />
+
+      <RenameExperimentDialog
+        isOpen={renameDialogOpen}
+        onClose={() => {
+          setRenameDialogOpen(false);
+          setExperimentToRename(null);
+        }}
+        experiment={experimentToRename}
+        onRename={handleRenameExperiment}
         currentUserId={currentUserId}
       />
     </div>
@@ -2047,7 +2321,7 @@ const RunDetailsPanel: React.FC<{
     { label: 'Logged models', value: '—' },
     { label: 'Registered models', value: '—' },
   ];
-    const getPermissions = (): ArtifactPermissions => {
+  const getPermissions = (): ArtifactPermissions => {
     // In real app, this would come from an API call based on run.experiment_id
     return {
       canDelete: true,
@@ -2077,11 +2351,10 @@ const RunDetailsPanel: React.FC<{
           <button
             key={tab}
             onClick={() => onTabChange(tab)}
-            className={`px-4 py-2 text-[11px] font-bold transition-all rounded-t-md border-t border-l border-r ${
-              activeTab === tab
-                ? 'bg-white border-gray-200 text-orange-500 -mb-[1px] z-10 relative'
-                : 'bg-transparent border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+            className={`px-4 py-2 text-[11px] font-bold transition-all rounded-t-md border-t border-l border-r ${activeTab === tab
+              ? 'bg-white border-gray-200 text-orange-500 -mb-[1px] z-10 relative'
+              : 'bg-transparent border-transparent text-gray-500 hover:text-gray-700'
+              }`}
           >
             {tab}
           </button>
@@ -2092,13 +2365,13 @@ const RunDetailsPanel: React.FC<{
         {activeTab === 'Overview' && (
           <OverviewTab detailsRows={detailsRows} />
         )}
-        
+
         {activeTab === 'Model Metrics' && (
           <div className="h-48 flex items-center justify-center border border-gray-200 rounded-lg border-dashed">
             <p className="text-xs text-gray-400">Model metrics visualization will appear here</p>
           </div>
         )}
-        
+
         {activeTab === 'Artifacts' && (
           <ArtifactsTab runId={run.runId} permissions={getPermissions()} />
         )}
@@ -2183,364 +2456,362 @@ const OverviewTab: React.FC<{ detailsRows: any[] }> = ({ detailsRows }) => (
 const ArtifactsTab: React.FC<{
   runId: string;
   permissions?: ArtifactPermissions;
-}> = ({ 
-  runId, 
-  permissions = MOCK_USER_PERMISSIONS 
+}> = ({
+  runId,
+  permissions = MOCK_USER_PERMISSIONS
 }) => {
-  const [artifacts, setArtifacts] = useState<Artifact[]>(MOCK_ARTIFACTS);
-  const [selectedArtifactIds, setSelectedArtifactIds] = useState<Set<string>>(new Set());
-  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['1', '2']));
-  const [selectedArtifactDetail, setSelectedArtifactDetail] = useState<Artifact | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [artifacts, setArtifacts] = useState<Artifact[]>(MOCK_ARTIFACTS);
+    const [selectedArtifactIds, setSelectedArtifactIds] = useState<Set<string>>(new Set());
+    const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['1', '2']));
+    const [selectedArtifactDetail, setSelectedArtifactDetail] = useState<Artifact | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const canDelete = permissions?.permissionLevel === 'edit' || permissions?.permissionLevel === 'admin';
-  const selectedArtifacts = artifacts.filter(a => selectedArtifactIds.has(a.id));
+    const canDelete = permissions?.permissionLevel === 'edit' || permissions?.permissionLevel === 'admin';
+    const selectedArtifacts = artifacts.filter(a => selectedArtifactIds.has(a.id));
 
-  // Flatten artifact tree for selection
-  const getAllArtifactIds = (artifactList: Artifact[]): string[] => {
-    return artifactList.reduce((acc: string[], artifact) => {
-      acc.push(artifact.id);
-      if (artifact.children) {
-        acc.push(...getAllArtifactIds(artifact.children));
-      }
-      return acc;
-    }, []);
-  };
-
-  const findArtifactAndChildren = (items: Artifact[], targetId: string): string[] => {
-    const ids: string[] = [];
-    for (const item of items) {
-      if (item.id === targetId) {
-        ids.push(item.id);
-        if (item.children) {
-          ids.push(...getAllArtifactIds(item.children));
+    // Flatten artifact tree for selection
+    const getAllArtifactIds = (artifactList: Artifact[]): string[] => {
+      return artifactList.reduce((acc: string[], artifact) => {
+        acc.push(artifact.id);
+        if (artifact.children) {
+          acc.push(...getAllArtifactIds(artifact.children));
         }
-      } else if (item.children) {
-        ids.push(...findArtifactAndChildren(item.children, targetId));
-      }
-    }
-    return ids;
-  };
+        return acc;
+      }, []);
+    };
 
-  const handleSelectArtifact = (artifactId: string, checked: boolean, isDirectory: boolean = false) => {
-    const newSelection = new Set(selectedArtifactIds);
-    
-    if (checked) {
-      if (isDirectory) {
-        const idsToAdd = findArtifactAndChildren(artifacts, artifactId);
-        idsToAdd.forEach(id => newSelection.add(id));
+    const findArtifactAndChildren = (items: Artifact[], targetId: string): string[] => {
+      const ids: string[] = [];
+      for (const item of items) {
+        if (item.id === targetId) {
+          ids.push(item.id);
+          if (item.children) {
+            ids.push(...getAllArtifactIds(item.children));
+          }
+        } else if (item.children) {
+          ids.push(...findArtifactAndChildren(item.children, targetId));
+        }
+      }
+      return ids;
+    };
+
+    const handleSelectArtifact = (artifactId: string, checked: boolean, isDirectory: boolean = false) => {
+      const newSelection = new Set(selectedArtifactIds);
+
+      if (checked) {
+        if (isDirectory) {
+          const idsToAdd = findArtifactAndChildren(artifacts, artifactId);
+          idsToAdd.forEach(id => newSelection.add(id));
+        } else {
+          newSelection.add(artifactId);
+        }
       } else {
-        newSelection.add(artifactId);
+        if (isDirectory) {
+          const idsToRemove = findArtifactAndChildren(artifacts, artifactId);
+          idsToRemove.forEach(id => newSelection.delete(id));
+        } else {
+          newSelection.delete(artifactId);
+        }
       }
-    } else {
-      if (isDirectory) {
-        const idsToRemove = findArtifactAndChildren(artifacts, artifactId);
-        idsToRemove.forEach(id => newSelection.delete(id));
+
+      setSelectedArtifactIds(newSelection);
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+      if (checked) {
+        setSelectedArtifactIds(new Set(getAllArtifactIds(artifacts)));
       } else {
-        newSelection.delete(artifactId);
+        setSelectedArtifactIds(new Set());
       }
-    }
+    };
 
-    setSelectedArtifactIds(newSelection);
-  };
+    const toggleDirectory = (dirId: string) => {
+      const newExpanded = new Set(expandedDirs);
+      if (newExpanded.has(dirId)) {
+        newExpanded.delete(dirId);
+      } else {
+        newExpanded.add(dirId);
+      }
+      setExpandedDirs(newExpanded);
+    };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedArtifactIds(new Set(getAllArtifactIds(artifacts)));
-    } else {
-      setSelectedArtifactIds(new Set());
-    }
-  };
-
-  const toggleDirectory = (dirId: string) => {
-    const newExpanded = new Set(expandedDirs);
-    if (newExpanded.has(dirId)) {
-      newExpanded.delete(dirId);
-    } else {
-      newExpanded.add(dirId);
-    }
-    setExpandedDirs(newExpanded);
-  };
-
-  const handleDeleteArtifacts = async () => {
-    if (!canDelete) {
-      setDeleteError('You do not have permission to delete these artifacts.');
-      return;
-    }
-
-    setIsDeleting(true);
-    setDeleteError(null);
-
-    try {
-      // Simulate API call to delete artifacts
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Filter out deleted artifacts
-      const newArtifacts = artifacts.filter(a => !selectedArtifactIds.has(a.id));
-      setArtifacts(newArtifacts);
-      
-      // Clear selection
-      setSelectedArtifactIds(new Set());
-      
-      // Clear detail view if it was deleted
-      if (selectedArtifactDetail && selectedArtifactIds.has(selectedArtifactDetail.id)) {
-        setSelectedArtifactDetail(null);
+    const handleDeleteArtifacts = async () => {
+      if (!canDelete) {
+        setDeleteError('You do not have permission to delete these artifacts.');
+        return;
       }
 
-      setIsDeleteDialogOpen(false);
-      console.log(`Successfully deleted ${selectedArtifacts.length} artifacts`);
-      
-    } catch (error) {
-      console.error('Failed to delete artifacts:', error);
-      setDeleteError('Failed to delete artifacts. Please try again.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+      setIsDeleting(true);
+      setDeleteError(null);
 
-  const renderArtifactTree = (items: Artifact[], level: number = 0) => {
-    return items.map((artifact) => (
-      <React.Fragment key={artifact.id}>
-        <div 
-          className={`group flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors ${
-            selectedArtifactIds.has(artifact.id) ? 'bg-orange-50/50' : ''
-          } ${level > 0 ? 'ml-6' : ''}`}
-        >
-          {/* Checkbox - only show if user has delete permission */}
-          {canDelete && (
-            <input
-              type="checkbox"
-              checked={selectedArtifactIds.has(artifact.id)}
-              onChange={(e) => handleSelectArtifact(
-                artifact.id, 
-                e.target.checked, 
-                artifact.type === 'directory'
-              )}
-              className="w-3.5 h-3.5 rounded border-gray-300 text-orange-500 focus:ring-orange-200"
-            />
-          )}
+      try {
+        // Simulate API call to delete artifacts
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-          {/* Expand/collapse for directories */}
-          {artifact.type === 'directory' && artifact.children && artifact.children.length > 0 ? (
-            <button
-              onClick={() => toggleDirectory(artifact.id)}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <ChevronDown 
-                size={14} 
-                className={`text-gray-400 transition-transform ${
-                  expandedDirs.has(artifact.id) ? '' : '-rotate-90'
-                }`}
-              />
-            </button>
-          ) : (
-            <span className="w-6" /> // Spacing alignment
-          )}
+        // Filter out deleted artifacts
+        const newArtifacts = artifacts.filter(a => !selectedArtifactIds.has(a.id));
+        setArtifacts(newArtifacts);
 
-          {/* Artifact icon */}
-          {artifact.type === 'directory' ? (
-            <FolderTree size={16} className="text-orange-400 flex-shrink-0" />
-          ) : (
-            <File size={16} className="text-gray-400 flex-shrink-0" />
-          )}
+        // Clear selection
+        setSelectedArtifactIds(new Set());
 
-          {/* Artifact name and details */}
-          <div 
-            className="flex-grow flex items-center justify-between cursor-pointer"
-            onClick={() => setSelectedArtifactDetail(artifact)}
+        // Clear detail view if it was deleted
+        if (selectedArtifactDetail && selectedArtifactIds.has(selectedArtifactDetail.id)) {
+          setSelectedArtifactDetail(null);
+        }
+
+        setIsDeleteDialogOpen(false);
+        console.log(`Successfully deleted ${selectedArtifacts.length} artifacts`);
+
+      } catch (error) {
+        console.error('Failed to delete artifacts:', error);
+        setDeleteError('Failed to delete artifacts. Please try again.');
+      } finally {
+        setIsDeleting(false);
+      }
+    };
+
+    const renderArtifactTree = (items: Artifact[], level: number = 0) => {
+      return items.map((artifact) => (
+        <React.Fragment key={artifact.id}>
+          <div
+            className={`group flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors ${selectedArtifactIds.has(artifact.id) ? 'bg-orange-50/50' : ''
+              } ${level > 0 ? 'ml-6' : ''}`}
           >
-            <span className="text-xs font-medium text-gray-700 hover:text-orange-600">
-              {artifact.name}
-            </span>
-            <div className="flex items-center gap-3 text-[10px] text-gray-400">
-              {artifact.size && <span>{artifact.size}</span>}
-              {artifact.modified && <span>{artifact.modified}</span>}
+            {/* Checkbox - only show if user has delete permission */}
+            {canDelete && (
+              <input
+                type="checkbox"
+                checked={selectedArtifactIds.has(artifact.id)}
+                onChange={(e) => handleSelectArtifact(
+                  artifact.id,
+                  e.target.checked,
+                  artifact.type === 'directory'
+                )}
+                className="w-3.5 h-3.5 rounded border-gray-300 text-orange-500 focus:ring-orange-200"
+              />
+            )}
+
+            {/* Expand/collapse for directories */}
+            {artifact.type === 'directory' && artifact.children && artifact.children.length > 0 ? (
+              <button
+                onClick={() => toggleDirectory(artifact.id)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <ChevronDown
+                  size={14}
+                  className={`text-gray-400 transition-transform ${expandedDirs.has(artifact.id) ? '' : '-rotate-90'
+                    }`}
+                />
+              </button>
+            ) : (
+              <span className="w-6" /> // Spacing alignment
+            )}
+
+            {/* Artifact icon */}
+            {artifact.type === 'directory' ? (
+              <FolderTree size={16} className="text-orange-400 flex-shrink-0" />
+            ) : (
+              <File size={16} className="text-gray-400 flex-shrink-0" />
+            )}
+
+            {/* Artifact name and details */}
+            <div
+              className="flex-grow flex items-center justify-between cursor-pointer"
+              onClick={() => setSelectedArtifactDetail(artifact)}
+            >
+              <span className="text-xs font-medium text-gray-700 hover:text-orange-600">
+                {artifact.name}
+              </span>
+              <div className="flex items-center gap-3 text-[10px] text-gray-400">
+                {artifact.size && <span>{artifact.size}</span>}
+                {artifact.modified && <span>{artifact.modified}</span>}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Render children if expanded */}
-        {artifact.type === 'directory' && 
-         expandedDirs.has(artifact.id) && 
-         artifact.children && 
-         renderArtifactTree(artifact.children, level + 1)}
-      </React.Fragment>
-    ));
-  };
+          {/* Render children if expanded */}
+          {artifact.type === 'directory' &&
+            expandedDirs.has(artifact.id) &&
+            artifact.children &&
+            renderArtifactTree(artifact.children, level + 1)}
+        </React.Fragment>
+      ));
+    };
 
-  return (
-    <div className="flex h-full gap-4">
-      {/* Left panel - Artifact tree */}
-      <div className="w-1/2 border-r border-gray-100 pr-4">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-xs font-bold text-gray-700">Artifacts</h4>
-          
-          {/* Action buttons */}
-          <div className="flex items-center gap-2">
-            {canDelete && selectedArtifactIds.size > 0 && (
-              <>
+    return (
+      <div className="flex h-full gap-4">
+        {/* Left panel - Artifact tree */}
+        <div className="w-1/2 border-r border-gray-100 pr-4">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-xs font-bold text-gray-700">Artifacts</h4>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              {canDelete && selectedArtifactIds.size > 0 && (
+                <>
+                  <button
+                    onClick={() => handleSelectAll(false)}
+                    className="text-[10px] text-gray-500 hover:text-gray-700 px-2 py-1"
+                  >
+                    Clear ({selectedArtifactIds.size})
+                  </button>
+                  <button
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-lg border border-red-200 hover:bg-red-100 transition-all"
+                    disabled={!canDelete}
+                  >
+                    <Trash2 size={12} />
+                    Delete ({selectedArtifactIds.size})
+                  </button>
+                </>
+              )}
+
+              {canDelete && selectedArtifactIds.size === 0 && (
                 <button
-                  onClick={() => handleSelectAll(false)}
+                  onClick={() => handleSelectAll(true)}
                   className="text-[10px] text-gray-500 hover:text-gray-700 px-2 py-1"
                 >
-                  Clear ({selectedArtifactIds.size})
+                  Select All
                 </button>
-                <button
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-lg border border-red-200 hover:bg-red-100 transition-all"
-                  disabled={!canDelete}
-                >
-                  <Trash2 size={12} />
-                  Delete ({selectedArtifactIds.size})
-                </button>
-              </>
-            )}
-            
-            {canDelete && selectedArtifactIds.size === 0 && (
-              <button
-                onClick={() => handleSelectAll(true)}
-                className="text-[10px] text-gray-500 hover:text-gray-700 px-2 py-1"
-              >
-                Select All
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Artifact tree */}
-        <div className="space-y-1 max-h-[400px] overflow-y-auto">
-          {renderArtifactTree(artifacts)}
-        </div>
-
-        {/* Permission warning */}
-        {!canDelete && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-2">
-              <Info size={14} className="text-gray-400" />
-              <p className="text-[10px] text-gray-500">
-                You have {permissions?.permissionLevel} access. Edit or admin permission required to delete artifacts.
-              </p>
+              )}
             </div>
           </div>
-        )}
 
-        {/* Delete error */}
-        {deleteError && (
-          <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-            <div className="flex items-start gap-2">
-              <Info size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-[10px] text-red-600">{deleteError}</p>
-            </div>
+          {/* Artifact tree */}
+          <div className="space-y-1 max-h-[400px] overflow-y-auto">
+            {renderArtifactTree(artifacts)}
           </div>
-        )}
-      </div>
 
-      {/* Right panel - Artifact detail */}
-<div className="w-1/2 pl-4">
-  <div className="bg-gray-50/50 rounded-lg border border-gray-200 h-[400px] flex flex-col items-center justify-center">
-          {selectedArtifactDetail ? (
-          <div className="w-full h-full overflow-auto p-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-gray-700 flex items-center gap-2">
-                  {selectedArtifactDetail.type === 'directory' ? (
-                    <FolderTree size={14} className="text-orange-400" />
-                  ) : (
-                    <File size={14} className="text-gray-400" />
-                  )}
-                  {selectedArtifactDetail.name}
-                </h4>
-                {canDelete && (
-                  <button
-                    onClick={() => {
-                      handleSelectArtifact(selectedArtifactDetail.id, true, selectedArtifactDetail.type === 'directory');
-                      setIsDeleteDialogOpen(true);
-                    }}
-                    className="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-2 text-[11px]">
-                {selectedArtifactDetail.uri && (
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-500 w-16 flex-shrink-0">URI:</span>
-                    <code className="text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded text-[10px] break-all">
-                      {selectedArtifactDetail.uri}
-                    </code>
-                    <CopyButton text={selectedArtifactDetail.uri} />
-                  </div>
-                )}
-                
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-500 w-16 flex-shrink-0">Path:</span>
-                  <code className="text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded text-[10px] break-all">
-                    {selectedArtifactDetail.path}
-                  </code>
-                  <CopyButton text={selectedArtifactDetail.path} />
-                </div>
-
-                {selectedArtifactDetail.size && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-500 w-16">Size:</span>
-                    <span className="text-gray-700">{selectedArtifactDetail.size}</span>
-                  </div>
-                )}
-
-                {selectedArtifactDetail.modified && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-500 w-16">Modified:</span>
-                    <span className="text-gray-700">{selectedArtifactDetail.modified}</span>
-                  </div>
-                )}
-
-                {selectedArtifactDetail.type === 'file' && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                        File Preview
-                      </span>
-                      <button className="text-[10px] text-orange-500 hover:text-orange-600">
-                        Download
-                      </button>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded p-3 text-[10px] text-gray-400 italic">
-                      Preview not available for this file type
-                    </div>
-                  </div>
-                )}
+          {/* Permission warning */}
+          {!canDelete && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2">
+                <Info size={14} className="text-gray-400" />
+                <p className="text-[10px] text-gray-500">
+                  You have {permissions?.permissionLevel} access. Edit or admin permission required to delete artifacts.
+                </p>
               </div>
             </div>
-          </div>
-          ) : (
-      <>
-        <File size={32} className="text-gray-200 mb-2" />
-        <p className="text-xs text-gray-400">
-          Select an artifact to view details
-        </p>
-      </>
+          )}
+
+          {/* Delete error */}
+          {deleteError && (
+            <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+              <div className="flex items-start gap-2">
+                <Info size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-[10px] text-red-600">{deleteError}</p>
+              </div>
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Delete Confirmation Dialog */}
-      <DeleteArtifactDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => {
-          setIsDeleteDialogOpen(false);
-          setDeleteError(null);
-        }}
-        onConfirm={handleDeleteArtifacts}
-        selectedArtifacts={selectedArtifacts}
-        isDeleting={isDeleting}
-      />
-    </div>
-  );
-};
+        {/* Right panel - Artifact detail */}
+        <div className="w-1/2 pl-4">
+          <div className="bg-gray-50/50 rounded-lg border border-gray-200 h-[400px] flex flex-col items-center justify-center">
+            {selectedArtifactDetail ? (
+              <div className="w-full h-full overflow-auto p-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-gray-700 flex items-center gap-2">
+                      {selectedArtifactDetail.type === 'directory' ? (
+                        <FolderTree size={14} className="text-orange-400" />
+                      ) : (
+                        <File size={14} className="text-gray-400" />
+                      )}
+                      {selectedArtifactDetail.name}
+                    </h4>
+                    {canDelete && (
+                      <button
+                        onClick={() => {
+                          handleSelectArtifact(selectedArtifactDetail.id, true, selectedArtifactDetail.type === 'directory');
+                          setIsDeleteDialogOpen(true);
+                        }}
+                        className="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 text-[11px]">
+                    {selectedArtifactDetail.uri && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-gray-500 w-16 flex-shrink-0">URI:</span>
+                        <code className="text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded text-[10px] break-all">
+                          {selectedArtifactDetail.uri}
+                        </code>
+                        <CopyButton text={selectedArtifactDetail.uri} />
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 w-16 flex-shrink-0">Path:</span>
+                      <code className="text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded text-[10px] break-all">
+                        {selectedArtifactDetail.path}
+                      </code>
+                      <CopyButton text={selectedArtifactDetail.path} />
+                    </div>
+
+                    {selectedArtifactDetail.size && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 w-16">Size:</span>
+                        <span className="text-gray-700">{selectedArtifactDetail.size}</span>
+                      </div>
+                    )}
+
+                    {selectedArtifactDetail.modified && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 w-16">Modified:</span>
+                        <span className="text-gray-700">{selectedArtifactDetail.modified}</span>
+                      </div>
+                    )}
+
+                    {selectedArtifactDetail.type === 'file' && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            File Preview
+                          </span>
+                          <button className="text-[10px] text-orange-500 hover:text-orange-600">
+                            Download
+                          </button>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded p-3 text-[10px] text-gray-400 italic">
+                          Preview not available for this file type
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <File size={32} className="text-gray-200 mb-2" />
+                <p className="text-xs text-gray-400">
+                  Select an artifact to view details
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteArtifactDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false);
+            setDeleteError(null);
+          }}
+          onConfirm={handleDeleteArtifacts}
+          selectedArtifacts={selectedArtifacts}
+          isDeleting={isDeleting}
+        />
+      </div>
+    );
+  };
 
 // ============================================================================
 // ML STUDIO
@@ -2583,9 +2854,9 @@ const MLStudioView: React.FC = () => {
       <div className="flex-grow overflow-hidden flex flex-col">
         {activeTab === 'Models' ? (
           selectedModel ? (
-            <ModelDetailsView 
-              modelName={selectedModel} 
-              onBack={() => setSelectedModel(null)} 
+            <ModelDetailsView
+              modelName={selectedModel}
+              onBack={() => setSelectedModel(null)}
             />
           ) : (
             <ModelsRegistryView onSelectModel={setSelectedModel} />
@@ -2634,18 +2905,16 @@ const App: React.FC = () => {
           <div
             key={item.id}
             onClick={() => setActiveView(item.id)}
-            className={`p-2 cursor-pointer transition-all relative group ${
-              activeView === item.id ? 'text-orange-500' : 'text-[#999999] hover:text-white'
-            }`}
+            className={`p-2 cursor-pointer transition-all relative group ${activeView === item.id ? 'text-orange-500' : 'text-[#999999] hover:text-white'
+              }`}
           >
             {item.isImage && item.imageUrl ? (
               <div className="w-5 h-5 flex items-center justify-center">
                 <div
-                  className={`w-full h-full transition-all ${
-                    activeView === item.id
-                      ? 'bg-orange-500 opacity-100'
-                      : 'bg-[#999999] opacity-60 group-hover:bg-white group-hover:opacity-100'
-                  }`}
+                  className={`w-full h-full transition-all ${activeView === item.id
+                    ? 'bg-orange-500 opacity-100'
+                    : 'bg-[#999999] opacity-60 group-hover:bg-white group-hover:opacity-100'
+                    }`}
                   style={{
                     maskImage: `url(${item.imageUrl})`,
                     maskSize: 'contain',
