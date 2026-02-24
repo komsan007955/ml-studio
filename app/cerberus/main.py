@@ -107,7 +107,7 @@ create_table_queries = [
 insert_row_queries = [
     ("user", "INSERT IGNORE INTO user (name) VALUE ('komsan')"), 
     ("component", "INSERT IGNORE INTO component (name) VALUE ('experiment'), ('model')"), 
-    ("operation", "INSERT IGNORE INTO operation (name) VALUE ('view'), ('edit'), ('manage')")
+    ("operation", "INSERT IGNORE INTO operation (name) VALUE ('view'), ('edit'), ('delete'), ('manage')")
 ]
 
 db_pool = None
