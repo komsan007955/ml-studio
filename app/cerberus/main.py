@@ -105,7 +105,7 @@ create_table_queries = [
 ]
 
 insert_row_queries = [
-    ("user", "INSERT IGNORE INTO user (name) VALUE ('komsan')"), 
+    ("user", "INSERT IGNORE INTO user (name) VALUE ('komsan'), ('ryan')"), 
     ("component", "INSERT IGNORE INTO component (name) VALUE ('experiment'), ('model')"), 
     ("operation", "INSERT IGNORE INTO operation (name) VALUE ('view'), ('edit'), ('delete'), ('manage')")
 ]
@@ -317,6 +317,57 @@ def add_element():
         "permission_id": permission_id, 
         "user_permission_id": user_permission_id
     }), 200
+
+
+@app.route("/api/edit_user_permission", methods=["POST"])
+def edit_user_permission():
+    operation_levels = [None, "view", "edit", "delete", "manage"]
+
+    data = request.json or {}
+    user_id_assign = data.get("user_id_assign")
+    user_id_grant = data.get("user_id_grant")
+    elem_id = data.get("elem_id")
+    operation_name = data.get("operation_name")
+
+    if not user_id_assign or not user_id_grant or not elem_id or not operation_name:
+        return jsonify({"error": "'user_id_assign', 'user_id_grant', 'elem_name', and 'operation_name' are required"}), 400
+    
+    # view highest permission the granting user has to the asset
+    with get_db_cursor() as cursor:
+        query = """
+            SELECT op.name 
+            FROM user_permission up 
+            INNER JOIN permission p ON up.permission_id = p.id 
+            INNER JOIN operation op ON p.operation_id = op.id 
+            WHERE up.user_id = %s AND elem_id = %s 
+            ORDER BY op.id desc
+            LIMIT 1;
+        """
+        
+        cursor.execute(query, (user_id_grant, elem_id))
+        res = cursor.fetchone()
+    
+    operation_name_prev = res[0] if res else None
+
+    # if highest permission is not found, add user_permission from level 1 to the set level
+    if not operation_name_prev:
+        operation_id = operation_levels.index(operation_name)
+        permission_id = get_permission_id(elem_id, list(range(1, operation_id + 1)))
+        user_permission_id = insert_user_permission(user_id_grant, permission_id)
+
+    return jsonify({
+        "user_id_assign": user_id_assign, 
+        "user_id_grant": user_id_grant, 
+        "elem_id": elem_id, 
+        "operation_name_prev": operation_name_prev,
+        "operation_name_now": operation_name, 
+        "permission_id": permission_id, 
+        "user_permission_id": user_permission_id
+    }), 200
+#     # if highest permission is already equal to the set permission, do nothing
+#     # if highest permission is higher than the set permission, remove user_permission rows until the highest permission = set permission.
+#     # if highest permission is lower than the set permission, insert user_permission rows until the highest permission = set permission.
+#     pass
 
 
 if __name__ == "__main__":
