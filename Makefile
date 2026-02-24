@@ -15,6 +15,10 @@ up:
 down:
 	docker compose down
 
+restart:
+	docker compose down
+	docker compose up --build -d
+
 reset:
 	docker compose down -v
 	docker compose up --build -d
