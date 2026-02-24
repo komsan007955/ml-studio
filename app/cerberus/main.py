@@ -157,11 +157,14 @@ def setup_tables(conn):
 
 @contextmanager
 def get_db_cursor():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conn = get_db_connection() 
+    cursor = conn.cursor(buffered=True)
     try:
         yield cursor
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
     finally:
         cursor.close()
         conn.close()
@@ -202,6 +205,117 @@ def get_user_permission():
         "user_id": user_id, 
         "elem_id": elem_id, 
         "operation_name": operation_name
+    }), 200
+
+
+def get_component_id(comp_name):
+    with get_db_cursor() as cursor:
+        query = "SELECT id FROM component WHERE name = %s;"
+        cursor.execute(query, (comp_name,))
+        res = cursor.fetchone()
+    
+    return res[0] if res else None
+
+
+def get_elem_id(elem_name):
+    with get_db_cursor() as cursor:
+        query = "SELECT id FROM element WHERE elem_name = %s;"
+        cursor.execute(query, (elem_name,))
+        res = cursor.fetchone()
+    
+    return res[0] if res else None
+
+
+def get_permission_id(elem_id, operation_ids):
+    if not isinstance(operation_ids, list):
+        operation_ids = [operation_ids]
+        
+    with get_db_cursor() as cursor:
+        format_strings = ','.join(['%s'] * len(operation_ids))
+        query = f"SELECT id FROM permission WHERE elem_id = %s AND operation_id IN ({format_strings});"
+        cursor.execute(query, [elem_id] + operation_ids)
+        res = cursor.fetchall()
+    
+    return [r[0] for r in res] if res else []
+
+
+def get_user_permission_id(user_id, permission_ids):
+    if not isinstance(permission_ids, list):
+        permission_ids = [permission_ids]
+        
+    with get_db_cursor() as cursor:
+        format_strings = ','.join(['%s'] * len(permission_ids))
+        query = f"SELECT id FROM user_permission WHERE user_id = %s AND permission_id IN ({format_strings});"
+        cursor.execute(query, [user_id] + permission_ids)
+        res = cursor.fetchall()
+    
+    return [r[0] for r in res] if res else []
+
+
+def insert_element(comp_id, elem_name, user_id):
+    with get_db_cursor() as cursor:
+        cursor.execute("INSERT INTO element (component_id, elem_name, created_by) VALUES (%s, %s, %s);", (comp_id, elem_name, user_id))
+    return get_elem_id(elem_name)
+
+
+def insert_permission(elem_id, operation_id):
+    ops = operation_id if isinstance(operation_id, list) else [operation_id]
+    
+    with get_db_cursor() as cursor:
+        values_template = ",".join(["(%s, %s)"] * len(ops))
+        query = f"INSERT INTO permission (elem_id, operation_id) VALUES {values_template};"
+        
+        params = []
+        for op in ops:
+            params.extend([elem_id, op])
+            
+        cursor.execute(query, params)
+    
+    return get_permission_id(elem_id, ops)
+
+
+def insert_user_permission(user_id, permission_id):
+    pms = permission_id if isinstance(permission_id, list) else [permission_id]
+    
+    with get_db_cursor() as cursor:
+        values_template = ",".join(["(%s, %s)"] * len(pms))
+        query = f"INSERT INTO user_permission (user_id, permission_id) VALUES {values_template};"
+        
+        params = []
+        for pm in pms:
+            params.extend([user_id, pm])
+            
+        cursor.execute(query, params)
+    
+    return get_user_permission_id(user_id, pms)
+
+
+@app.route("/api/add_element", methods=["POST"])
+def add_element():
+    data = request.json or {}
+    comp_name = data.get("component_name")
+    elem_name = data.get("elem_name")
+    user_id = data.get("user_id")
+
+    if not comp_name or not elem_name or not user_id:
+        return jsonify({"error": "'component_name', 'elem_name', and 'user_id' are required"}), 400
+    
+    comp_id = get_component_id(comp_name)
+    
+    if comp_id is None:
+        return jsonify({"error": f"Component '{comp_name}' not found"}), 404
+    
+    elem_id = insert_element(comp_id, elem_name, user_id)
+    permission_id = insert_permission(elem_id, list(range(1, 5)))
+    user_permission_id = insert_user_permission(user_id, permission_id)
+
+    return jsonify({
+        "component_name": comp_name, 
+        "elem_name": elem_name, 
+        "user_id": user_id, 
+        "elem_id": elem_id, 
+        "permission_id": permission_id, 
+        "user_permission_id": user_permission_id
     }), 200
 
 
