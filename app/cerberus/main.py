@@ -155,59 +155,6 @@ def setup_tables(conn):
         if "cursor" in locals(): cursor.close()
 
 
-@contextmanager
-def get_db_cursor():
-    conn = get_db_connection() 
-    cursor = conn.cursor(buffered=True)
-    try:
-        yield cursor
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        raise e
-    finally:
-        cursor.close()
-        conn.close()
-
-
-@app.route("/")
-def index():
-    try:
-        with get_db_cursor() as cursor:
-            cursor.execute("SELECT DATABASE();")
-            db_name = cursor.fetchone()
-            
-        return f"Connected to database: {db_name[0]}"
-
-    except Exception as e:
-        return f"Connection failed: {str(e)}", 500
-
-
-@app.route("/api/user_permission", methods=["GET"])
-def get_user_permission():
-    user_id = request.args.get("user_id")
-    elem_id = request.args.get("elem_id")
-    operation_name = request.args.get("operation_name")
-
-    with get_db_cursor() as cursor:
-        query = """
-            SELECT op.name
-            FROM permission p
-            INNER JOIN user_permission up ON p.id = up.permission_id
-            INNER JOIN operation op ON p.operation_id = op.id
-            WHERE up.user_id = %s AND p.elem_id = %s AND op.name = %s;
-        """
-        cursor.execute(query, (user_id, elem_id, operation_name))
-        res = cursor.fetchone()
-
-    return jsonify({
-        "has_permission": bool(res),
-        "user_id": user_id, 
-        "elem_id": elem_id, 
-        "operation_name": operation_name
-    }), 200
-
-
 def get_component_id(comp_name):
     with get_db_cursor() as cursor:
         query = "SELECT id FROM component WHERE name = %s;"
@@ -288,6 +235,59 @@ def insert_user_permission(user_id, permission_id):
         cursor.execute(query, params)
     
     return get_user_permission_id(user_id, pms)
+
+
+@contextmanager
+def get_db_cursor():
+    conn = get_db_connection() 
+    cursor = conn.cursor(buffered=True)
+    try:
+        yield cursor
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/")
+def index():
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute("SELECT DATABASE();")
+            db_name = cursor.fetchone()
+            
+        return f"Connected to database: {db_name[0]}"
+
+    except Exception as e:
+        return f"Connection failed: {str(e)}", 500
+
+
+@app.route("/api/user_permission", methods=["GET"])
+def get_user_permission():
+    user_id = request.args.get("user_id")
+    elem_id = request.args.get("elem_id")
+    operation_name = request.args.get("operation_name")
+
+    with get_db_cursor() as cursor:
+        query = """
+            SELECT op.name
+            FROM permission p
+            INNER JOIN user_permission up ON p.id = up.permission_id
+            INNER JOIN operation op ON p.operation_id = op.id
+            WHERE up.user_id = %s AND p.elem_id = %s AND op.name = %s;
+        """
+        cursor.execute(query, (user_id, elem_id, operation_name))
+        res = cursor.fetchone()
+
+    return jsonify({
+        "has_permission": bool(res),
+        "user_id": user_id, 
+        "elem_id": elem_id, 
+        "operation_name": operation_name
+    }), 200
 
 
 @app.route("/api/add_element", methods=["POST"])
