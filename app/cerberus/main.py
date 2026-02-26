@@ -237,6 +237,22 @@ def insert_user_permission(user_id, permission_id):
     return get_user_permission_id(user_id, pms)
 
 
+def delete_user_permission(user_id, permission_id):
+    pms = permission_id if isinstance(permission_id, list) else [permission_id]
+    
+    with get_db_cursor() as cursor:
+        values_template = " or ".join(["(user_id = %s and permission_id = %s)"] * len(pms))
+        query = f"DELETE FROM user_permission WHERE {values_template};"
+        
+        params = []
+        for pm in pms:
+            params.extend([user_id, pm])
+            
+        cursor.execute(query, params)
+    
+    return
+
+
 @contextmanager
 def get_db_cursor():
     conn = get_db_connection() 
@@ -355,6 +371,10 @@ def edit_user_permission():
     if operation_id_now < operation_id_next:
         permission_id = get_permission_id(elem_id, list(range(operation_id_now + 1, operation_id_next + 1)))
         user_permission_id = insert_user_permission(user_id_grant, permission_id)
+    # if highest permission is higher than the set permission, remove user_permission rows until the highest permission = set permission.
+    elif operation_id_now > operation_id_next:
+        permission_id = get_permission_id(elem_id, list(range(operation_id_next + 1, operation_id_now + 1)))
+        user_permission_id = delete_user_permission(user_id_grant, permission_id)
     # if highest permission is already equal to the set permission, do nothing
     else:
         permission_id = None
@@ -372,9 +392,6 @@ def edit_user_permission():
         "permission_id": permission_id, 
         "user_permission_id": user_permission_id
     }), 200
-
-#     # if highest permission is higher than the set permission, remove user_permission rows until the highest permission = set permission.
-#     pass
 
 
 if __name__ == "__main__":
