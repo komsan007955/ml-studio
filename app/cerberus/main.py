@@ -347,26 +347,33 @@ def edit_user_permission():
         cursor.execute(query, (user_id_grant, elem_id))
         res = cursor.fetchone()
     
-    operation_name_prev = res[0] if res else None
+    operation_name_now = res[0] if res else None
+    operation_id_now = operation_levels.index(operation_name_now)
+    operation_id_next = operation_levels.index(operation_name)
 
-    # if highest permission is not found, add user_permission from level 1 to the set level
-    if not operation_name_prev:
-        operation_id = operation_levels.index(operation_name)
-        permission_id = get_permission_id(elem_id, list(range(1, operation_id + 1)))
+    # if highest permission is lower than the set permission, insert user_permission rows until the highest permission = set permission.
+    if operation_id_now < operation_id_next:
+        permission_id = get_permission_id(elem_id, list(range(operation_id_now + 1, operation_id_next + 1)))
         user_permission_id = insert_user_permission(user_id_grant, permission_id)
+    # if highest permission is already equal to the set permission, do nothing
+    else:
+        permission_id = None
+        user_permission_id = None
+
+    operation_name_prev = operation_name_now
+    operation_name_now = operation_name
 
     return jsonify({
         "user_id_assign": user_id_assign, 
         "user_id_grant": user_id_grant, 
         "elem_id": elem_id, 
         "operation_name_prev": operation_name_prev,
-        "operation_name_now": operation_name, 
+        "operation_name_now": operation_name_now, 
         "permission_id": permission_id, 
         "user_permission_id": user_permission_id
     }), 200
-#     # if highest permission is already equal to the set permission, do nothing
+
 #     # if highest permission is higher than the set permission, remove user_permission rows until the highest permission = set permission.
-#     # if highest permission is lower than the set permission, insert user_permission rows until the highest permission = set permission.
 #     pass
 
 
