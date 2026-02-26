@@ -174,13 +174,16 @@ def get_elem_id(elem_name):
 
 
 def get_permission_id(elem_id, operation_ids):
-    if not isinstance(operation_ids, list):
+    if not isinstance(operation_ids, list) and operation_ids is not None:
         operation_ids = [operation_ids]
         
     with get_db_cursor() as cursor:
-        format_strings = ','.join(['%s'] * len(operation_ids))
-        query = f"SELECT id FROM permission WHERE elem_id = %s AND operation_id IN ({format_strings});"
-        cursor.execute(query, [elem_id] + operation_ids)
+        if not operation_ids:
+            cursor.execute("SELECT id FROM permission WHERE elem_id = %s;", (elem_id,))
+        else:
+            format_strings = ','.join(['%s'] * len(operation_ids))
+            query = f"SELECT id FROM permission WHERE elem_id = %s AND operation_id IN ({format_strings});"
+            cursor.execute(query, [elem_id] + operation_ids)
         res = cursor.fetchall()
     
     return [r[0] for r in res] if res else []
@@ -192,8 +195,12 @@ def get_user_permission_id(user_id, permission_ids):
         
     with get_db_cursor() as cursor:
         format_strings = ','.join(['%s'] * len(permission_ids))
-        query = f"SELECT id FROM user_permission WHERE user_id = %s AND permission_id IN ({format_strings});"
-        cursor.execute(query, [user_id] + permission_ids)
+        if not user_id:
+            query = f"SELECT id FROM user_permission WHERE permission_id IN ({format_strings});"
+            cursor.execute(query, permission_ids)
+        else:
+            query = f"SELECT id FROM user_permission WHERE user_id = %s AND permission_id IN ({format_strings});"
+            cursor.execute(query, [user_id] + permission_ids)
         res = cursor.fetchall()
     
     return [r[0] for r in res] if res else []
@@ -203,6 +210,12 @@ def insert_element(comp_id, elem_name, user_id):
     with get_db_cursor() as cursor:
         cursor.execute("INSERT INTO element (component_id, elem_name, created_by) VALUES (%s, %s, %s);", (comp_id, elem_name, user_id))
     return get_elem_id(elem_name)
+
+
+def delete_element(elem_id):
+    with get_db_cursor() as cursor:
+        cursor.execute("DELETE FROM element WHERE id = %s;", (elem_id,))
+    return elem_id
 
 
 def insert_permission(elem_id, operation_id):
@@ -221,6 +234,22 @@ def insert_permission(elem_id, operation_id):
     return get_permission_id(elem_id, ops)
 
 
+def delete_permission(permission_id, elem_id):
+    if not permission_id:
+        permission_id = get_permission_id(elem_id, None) 
+    if not permission_id:
+        return []
+
+    ids_to_delete = permission_id if isinstance(permission_id, list) else [permission_id]
+
+    with get_db_cursor() as cursor:
+        placeholders = ", ".join(["%s"] * len(ids_to_delete))
+        query = f"DELETE FROM permission WHERE id IN ({placeholders});"
+        cursor.execute(query, ids_to_delete)
+        
+    return ids_to_delete
+
+
 def insert_user_permission(user_id, permission_id):
     pms = permission_id if isinstance(permission_id, list) else [permission_id]
     
@@ -237,21 +266,24 @@ def insert_user_permission(user_id, permission_id):
     return get_user_permission_id(user_id, pms)
 
 
-def delete_user_permission(user_id, permission_id):
+def delete_user_permission(user_permission_id, user_id, permission_id):
     pms = permission_id if isinstance(permission_id, list) else [permission_id]
-    user_permission_id = get_user_permission_id(user_id, pms)
+    if not user_permission_id:
+        if not user_id:
+            ids_to_delete = get_user_permission_id(None, pms)
+        else:
+            ids_to_delete = get_user_permission_id(user_id, pms)
+    else:
+        ids_to_delete = user_permission_id
+    if not isinstance(ids_to_delete, list):
+        ids_to_delete = [ids_to_delete]
 
     with get_db_cursor() as cursor:
-        values_template = " or ".join(["(user_id = %s and permission_id = %s)"] * len(pms))
-        query = f"DELETE FROM user_permission WHERE {values_template};"
-        
-        params = []
-        for pm in pms:
-            params.extend([user_id, pm])
-            
-        cursor.execute(query, params)
+        format_strings = ", ".join(["%s"] * len(ids_to_delete))
+        query = f"DELETE FROM user_permission WHERE id IN ({format_strings});"
+        cursor.execute(query, ids_to_delete)
     
-    return user_permission_id
+    return ids_to_delete
 
 
 @contextmanager
@@ -375,7 +407,7 @@ def edit_user_permission():
     # if highest permission is higher than the set permission, remove user_permission rows until the highest permission = set permission.
     elif operation_id_now > operation_id_next:
         permission_id = get_permission_id(elem_id, list(range(operation_id_next + 1, operation_id_now + 1)))
-        user_permission_id = delete_user_permission(user_id_grant, permission_id)
+        user_permission_id = delete_user_permission(None, user_id_grant, permission_id)
     # if highest permission is already equal to the set permission, do nothing
     else:
         permission_id = None
@@ -390,6 +422,26 @@ def edit_user_permission():
         "elem_id": elem_id, 
         "operation_name_prev": operation_name_prev,
         "operation_name_now": operation_name_now, 
+        "permission_id": permission_id, 
+        "user_permission_id": user_permission_id
+    }), 200
+
+
+@app.route("/api/delete_element", methods=["POST"])
+def delete_element_api():
+    data = request.json or {}
+    elem_id = data.get("elem_id")
+
+    if not elem_id:
+        return jsonify({"error": "'elem_id' is required"}), 400
+    
+    permission_id = get_permission_id(elem_id, None)
+    user_permission_id = delete_user_permission(None, None, permission_id)
+    permission_id = delete_permission(None, elem_id)
+    elem_id = delete_element(elem_id)
+
+    return jsonify({
+        "elem_id": elem_id, 
         "permission_id": permission_id, 
         "user_permission_id": user_permission_id
     }), 200
