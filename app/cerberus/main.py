@@ -345,8 +345,8 @@ def edit_user_permission():
     elem_id = data.get("elem_id")
     operation_name = data.get("operation_name")
 
-    if not user_id_assign or not user_id_grant or not elem_id or not operation_name:
-        return jsonify({"error": "'user_id_assign', 'user_id_grant', 'elem_name', and 'operation_name' are required"}), 400
+    if not user_id_assign or not user_id_grant or not elem_id:
+        return jsonify({"error": "'user_id_assign', 'user_id_grant', and 'elem_name' are required"}), 400
     
     # view highest permission the granting user has to the asset
     with get_db_cursor() as cursor:
