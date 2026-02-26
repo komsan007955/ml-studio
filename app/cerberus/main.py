@@ -239,7 +239,8 @@ def insert_user_permission(user_id, permission_id):
 
 def delete_user_permission(user_id, permission_id):
     pms = permission_id if isinstance(permission_id, list) else [permission_id]
-    
+    user_permission_id = get_user_permission_id(user_id, pms)
+
     with get_db_cursor() as cursor:
         values_template = " or ".join(["(user_id = %s and permission_id = %s)"] * len(pms))
         query = f"DELETE FROM user_permission WHERE {values_template};"
@@ -250,7 +251,7 @@ def delete_user_permission(user_id, permission_id):
             
         cursor.execute(query, params)
     
-    return
+    return user_permission_id
 
 
 @contextmanager
