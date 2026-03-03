@@ -1,29 +1,11 @@
 services:
-  # The Flask App
-  web:
-    build:
-      context: .
-      args:
-        - APP_NAME=cerberus
-    image: cerberus-api
-    ports:
-      - "5000:5000"
-    environment:
-      MYSQL_HOST: db 
-      MYSQL_USER: blendata
-      MYSQL_PASSWORD: "#########"
-      MYSQL_DATABASE: auth
-    depends_on:
-      db:
-        condition: service_healthy
-
-  # The MySQL Database
-  db:
+  auth_db:
     image: cerberus-db
     build:
       context: .
       dockerfile_inline: |
         FROM mysql:8.0
+    container_name: auth_db
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: "#########"
@@ -40,9 +22,50 @@ services:
       timeout: 5s
       retries: 10
   
-  # PostgreSQL for MLflow Metadata
-  pg-db:
+  auth_api:
+    build:
+      context: .
+      args:
+        - APP_NAME=cerberus
+    container_name: auth_api
+    image: cerberus-api
+    ports:
+      - "5000:5000"
+    environment:
+      MYSQL_HOST: db 
+      MYSQL_USER: blendata
+      MYSQL_PASSWORD: "#########"
+      MYSQL_DATABASE: auth
+    depends_on:
+      auth_db:
+        condition: service_healthy
+  
+  web_frontend:
+    build:
+      context: ./app/ui
+    container_name: ui
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_PORT=0
+      - CI=true
+    stdin_open: true 
+    tty: true
+
+  web_backend:
+    build:
+      context: .
+      args:
+        - APP_NAME=hera
+    image: hera
+    container_name: hera
+    ports:
+      - "5001:5000"
+
+  mlflow_db:
     image: postgres:15
+    container_name: mlflow_db
     restart: always
     environment:
       POSTGRES_USER: blendata
@@ -56,7 +79,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # MLflow Tracking Server
   mlflow:
     build: .
     container_name: mlflow_server
@@ -64,41 +86,17 @@ services:
     ports:
       - "5050:5000"
     environment:
-      - BACKEND_STORE_URI=postgresql://blendata:#########@pg-db:5432/mlflow
+      - BACKEND_STORE_URI=postgresql://blendata:#########@mlflow_db:5432/mlflow
     command: >
       mlflow server 
-      --backend-store-uri postgresql://blendata:#########@pg-db:5432/mlflow
+      --backend-store-uri postgresql://blendata:#########@mlflow_db:5432/mlflow
       --host 0.0.0.0
       --port 5000
       --serve-artifacts
       --default-artifact-root mlflow-artifacts:/
     depends_on:
-      pg-db:
+      mlflow_db:
         condition: service_healthy
-
-  # ML Studio Backend
-  ml_studio:
-    build:
-      context: .
-      args:
-        - APP_NAME=ml_studio
-    image: ml_studio
-    container_name: ml_studio
-    ports:
-      - "5001:5000"
-  
-  ui:
-    build:
-      context: ./app/ui
-    container_name: ui
-    ports:
-      - "3000:3000"
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - WDS_SOCKET_PORT=0
-      - CI=true
-    stdin_open: true 
-    tty: true
 
 volumes:
   mysql_data:

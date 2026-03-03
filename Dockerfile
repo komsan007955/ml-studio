@@ -36,7 +36,7 @@ COPY app/${APP_NAME}/requirements.txt /tmp/app_requirements.txt
 RUN pip install --no-cache-dir -r /tmp/app_requirements.txt
 
 
-ARG APP_NAME=ml_studio
+ARG APP_NAME=hera
 
 COPY app/${APP_NAME}/requirements.txt /tmp/app_requirements.txt
 # RUN pip install --no-cache-dir -r /tmp/app_requirements.txt
