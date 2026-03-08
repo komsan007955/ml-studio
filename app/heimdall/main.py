@@ -15,7 +15,7 @@ def index():
     return jsonify({
         "message": "Welcome to ML Studio",
         "status": "Online",
-        "service": "ml_studio"
+        "service": "heimdall"
     })
 
 @app.route("/api/hello")

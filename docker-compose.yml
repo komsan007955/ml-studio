@@ -77,13 +77,13 @@ services:
         condition: service_healthy
 
   # ML Studio Backend
-  ml_studio:
+  heimdall:
     build:
       context: .
       args:
-        - APP_NAME=ml_studio
-    image: ml_studio
-    container_name: ml_studio
+        - APP_NAME=heimdall
+    image: heimdall
+    container_name: heimdall
     ports:
       - "5001:5000"
   
