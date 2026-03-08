@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import functions as fn
+import requests, json
 
 app = Flask(__name__)
 CORS(app)
@@ -38,6 +39,15 @@ def api_create_experiment():
 
 @app.route("/api/experiments/search", methods=["POST"])
 def api_search_experiments():
+    user_id = request.headers.get("X-User-Id")
+    res = requests.get(
+            "http://ml-studio-web-1:5000/api/get_viewable_elements?comp_name=experiment", 
+            headers={"X-User-Id": user_id}, 
+            timeout=5
+        )
+    res.raise_for_status()
+    exp_ids = res.json()["elem_ids"]
+
     data = request.json or {}
     res = fn.search_experiments(
         max_results=data.get("max_results", 500),
@@ -46,7 +56,8 @@ def api_search_experiments():
         order_by=data.get("order_by"),
         view_type=data.get("view_type", "ACTIVE_ONLY")
     )
-    return jsonify(res)
+    res_final = [exp for exp in res["experiments"] if int(exp["experiment_id"]) in exp_ids]
+    return jsonify(res_final)
 
 @app.route("/api/experiments/get", methods=["GET"])
 def api_get_experiment():
