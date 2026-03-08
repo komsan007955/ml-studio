@@ -316,7 +316,7 @@ def index():
 
 @app.route("/api/user_permission", methods=["GET"])
 def get_user_permission():
-    user_id = request.args.get("user_id")
+    user_id = request.headers.get("X-User-Id")
     elem_id = request.args.get("elem_id")
     operation_name = request.args.get("operation_name")
 
@@ -341,13 +341,13 @@ def get_user_permission():
 
 @app.route("/api/add_element", methods=["POST"])
 def add_element():
+    user_id = request.headers.get("X-User-Id")
     data = request.json or {}
     comp_name = data.get("component_name")
     elem_name = data.get("elem_name")
-    user_id = data.get("user_id")
 
-    if not comp_name or not elem_name or not user_id:
-        return jsonify({"error": "'component_name', 'elem_name', and 'user_id' are required"}), 400
+    if not comp_name or not elem_name:
+        return jsonify({"error": "'component_name' and 'elem_name' are required"}), 400
     
     comp_id = get_component_id(comp_name)
     
@@ -372,14 +372,14 @@ def add_element():
 def edit_user_permission():
     operation_levels = [None, "view", "edit", "delete", "manage"]
 
+    user_id_assign = request.headers.get("X-User-Id")
     data = request.json or {}
-    user_id_assign = data.get("user_id_assign")
-    user_id_grant = data.get("user_id_grant")
+    user_id_grant = data.get("user_id")
     elem_id = data.get("elem_id")
     operation_name = data.get("operation_name")
 
-    if not user_id_assign or not user_id_grant or not elem_id:
-        return jsonify({"error": "'user_id_assign', 'user_id_grant', and 'elem_name' are required"}), 400
+    if not user_id_grant or not elem_id:
+        return jsonify({"error": "'user_id' and 'elem_name' are required"}), 400
     
     # view highest permission the granting user has to the asset
     with get_db_cursor() as cursor:
@@ -429,6 +429,7 @@ def edit_user_permission():
 
 @app.route("/api/delete_element", methods=["POST"])
 def delete_element_api():
+    user_id = request.headers.get("X-User-Id")
     data = request.json or {}
     elem_id = data.get("elem_id")
 
