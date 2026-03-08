@@ -206,9 +206,9 @@ def get_user_permission_id(user_id, permission_ids):
     return [r[0] for r in res] if res else []
 
 
-def insert_element(comp_id, elem_name, user_id):
+def insert_element(elem_id, comp_id, elem_name, user_id):
     with get_db_cursor() as cursor:
-        cursor.execute("INSERT INTO element (component_id, elem_name, created_by) VALUES (%s, %s, %s);", (comp_id, elem_name, user_id))
+        cursor.execute("INSERT INTO element (id, component_id, elem_name, created_by) VALUES (%s, %s, %s, %s);", (elem_id, comp_id, elem_name, user_id))
     return get_elem_id(elem_name)
 
 
@@ -343,6 +343,7 @@ def get_user_permission():
 def add_element():
     user_id = request.headers.get("X-User-Id")
     data = request.json or {}
+    elem_id = data.get("elem_id")
     comp_name = data.get("component_name")
     elem_name = data.get("elem_name")
 
@@ -354,7 +355,7 @@ def add_element():
     if comp_id is None:
         return jsonify({"error": f"Component '{comp_name}' not found"}), 404
     
-    elem_id = insert_element(comp_id, elem_name, user_id)
+    elem_id = insert_element(elem_id, comp_id, elem_name, user_id)
     permission_id = insert_permission(elem_id, list(range(1, 5)))
     user_permission_id = insert_user_permission(user_id, permission_id)
 
