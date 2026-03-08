@@ -339,6 +339,30 @@ def get_user_permission():
     }), 200
 
 
+@app.route("/api/get_viewable_elements", methods=["GET"])
+def get_viewable_elements():
+    user_id = request.headers.get("X-User-Id")
+    comp_name = request.args.get("comp_name")
+
+    with get_db_cursor() as cursor:
+        query = """
+            SELECT e.id
+            FROM element e
+            INNER JOIN component c ON e.component_id = c.id
+            INNER JOIN permission p ON e.id = p.elem_id
+            INNER JOIN user_permission up ON p.id = up.permission_id
+            WHERE up.user_id = %s AND c.name = %s AND p.operation_id = 1;
+        """
+        cursor.execute(query, (user_id, comp_name))
+        res = cursor.fetchall()
+
+    return jsonify({
+        "user_id": user_id, 
+        "comp_name": comp_name, 
+        "elem_ids": [r[0] for r in res] if res else []
+    }), 200
+
+
 @app.route("/api/add_element", methods=["POST"])
 def add_element():
     user_id = request.headers.get("X-User-Id")

@@ -4,6 +4,9 @@ curl -H "Content-Type: application/json" -H "X-User-Id: 1" -d '{"elem_id": 1, "c
 CHECKING USER PERMISSION
 curl -H "X-User-Id: 1" "http://localhost:5000/api/user_permission?elem_id=1&operation_name=Manage"
 
+GET VIEWABLE ELEMENTS
+curl -H "X-User-Id: 1" "http://localhost:5000/api/get_viewable_elements?comp_name=experiment"
+
 EDITING USER PERMISSION
 curl -H "Content-Type: application/json" -H "X-User-Id: 1" -d '{"user_id":"2", "elem_id":"1", "operation_name":"edit"}' http://localhost:5000/api/edit_user_permission
 
