@@ -46,7 +46,8 @@ def api_search_experiments():
             timeout=5
         )
     res.raise_for_status()
-    exp_ids = res.json()["elem_ids"]
+    elem_ids = res.json()["elem_ids"]
+    dict_elem_ids = {k: v for k, v in sorted(elem_ids)}
 
     data = request.json or {}
     res = fn.search_experiments(
@@ -56,7 +57,8 @@ def api_search_experiments():
         order_by=data.get("order_by"),
         view_type=data.get("view_type", "ACTIVE_ONLY")
     )
-    res_final = [exp for exp in res["experiments"] if int(exp["experiment_id"]) in exp_ids]
+    exp = res["experiments"]
+    res_final = [e for e in exp if (int(e["experiment_id"]) in dict_elem_ids.keys()) and (e["lifecycle_stage"] != "delete" or dict_elem_ids[e["experiment_id"]] == user_id)]
     return jsonify(res_final)
 
 @app.route("/api/experiments/get", methods=["GET"])
