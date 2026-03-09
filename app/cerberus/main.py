@@ -346,7 +346,7 @@ def get_viewable_elements():
 
     with get_db_cursor() as cursor:
         query = """
-            SELECT e.id
+            SELECT e.id, up.user_id
             FROM element e
             INNER JOIN component c ON e.component_id = c.id
             INNER JOIN permission p ON e.id = p.elem_id
@@ -359,7 +359,7 @@ def get_viewable_elements():
     return jsonify({
         "user_id": user_id, 
         "comp_name": comp_name, 
-        "elem_ids": [r[0] for r in res] if res else []
+        "elem_ids": [r for r in res] if res else []
     }), 200
 
 
