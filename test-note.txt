@@ -1,8 +1,8 @@
 CERBERUS
 
 ADDING ELEMENT
-curl -H "Content-Type: application/json" -H "X-User-Id: 1" -d '{"elem_id": 1, "component_name":"experiment", "elem_name":"experiment_a"}' http://localhost:5000/api/add_element
-curl -H "Content-Type: application/json" -H "X-User-Id: 2" -d '{"elem_id": 2, "component_name":"experiment", "elem_name":"experiment_b"}' http://localhost:5000/api/add_element
+curl -H "Content-Type: application/json" -H "X-User-Id: 1" -d '{"component_name":"experiment", "elem_name":"experiment_a"}' http://localhost:5000/api/add_element
+curl -H "Content-Type: application/json" -H "X-User-Id: 2" -d '{"component_name":"experiment", "elem_name":"experiment_b"}' http://localhost:5000/api/add_element
 
 CHECKING USER PERMISSION
 curl -H "X-User-Id: 1" "http://localhost:5000/api/user_permission?elem_id=1&operation_name=Manage"

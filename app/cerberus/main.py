@@ -39,9 +39,9 @@ create_table_queries = [
             parent INT,
             ancestor VARCHAR(100),
             created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            created_by VARCHAR(20),
+            created_by INT,
             modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            modified_by VARCHAR(20),
+            modified_by INT,
             version INT,
             CONSTRAINT component_fk
                 FOREIGN KEY (component_id)
@@ -206,9 +206,9 @@ def get_user_permission_id(user_id, permission_ids):
     return [r[0] for r in res] if res else []
 
 
-def insert_element(elem_id, comp_id, elem_name, user_id):
+def insert_element(comp_id, elem_name, user_id):
     with get_db_cursor() as cursor:
-        cursor.execute("INSERT INTO element (id, component_id, elem_name, created_by) VALUES (%s, %s, %s, %s);", (elem_id, comp_id, elem_name, user_id))
+        cursor.execute("INSERT INTO element (component_id, elem_name, created_by) VALUES (%s, %s, %s);", (comp_id, elem_name, user_id))
     return get_elem_id(elem_name)
 
 
@@ -346,7 +346,7 @@ def get_viewable_elements():
 
     with get_db_cursor() as cursor:
         query = """
-            SELECT e.id, up.user_id
+            SELECT e.elem_name, e.created_by
             FROM element e
             INNER JOIN component c ON e.component_id = c.id
             INNER JOIN permission p ON e.id = p.elem_id
@@ -359,7 +359,7 @@ def get_viewable_elements():
     return jsonify({
         "user_id": user_id, 
         "comp_name": comp_name, 
-        "elem_ids": [r for r in res] if res else []
+        "elem_names": [r for r in res] if res else []
     }), 200
 
 
@@ -379,7 +379,7 @@ def add_element():
     if comp_id is None:
         return jsonify({"error": f"Component '{comp_name}' not found"}), 404
     
-    elem_id = insert_element(elem_id, comp_id, elem_name, user_id)
+    elem_id = insert_element(comp_id, elem_name, user_id)
     permission_id = insert_permission(elem_id, list(range(1, 5)))
     user_permission_id = insert_user_permission(user_id, permission_id)
 
