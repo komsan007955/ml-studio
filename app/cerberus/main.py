@@ -317,34 +317,39 @@ def index():
 @app.route("/api/user_permission", methods=["GET"])
 def get_user_permission():
     user_id = request.headers.get("X-User-Id")
-    elem_id = request.args.get("elem_id")
+    # CHANGED: We now ask Heimdall for the 'elem_name' instead of 'elem_id'
+    elem_name = request.args.get("elem_name") 
     operation_name = request.args.get("operation_name")
 
     with get_db_cursor() as cursor:
+        # CHANGED: Added the JOIN to the element table so we can filter by name
         query = """
             SELECT op.name
             FROM permission p
             INNER JOIN user_permission up ON p.id = up.permission_id
             INNER JOIN operation op ON p.operation_id = op.id
-            WHERE up.user_id = %s AND p.elem_id = %s AND op.name = %s;
+            INNER JOIN element e ON p.elem_id = e.id
+            WHERE up.user_id = %s AND e.elem_name = %s AND op.name = %s;
         """
-        cursor.execute(query, (user_id, elem_id, operation_name))
+        cursor.execute(query, (user_id, elem_name, operation_name))
         res = cursor.fetchone()
 
     return jsonify({
         "has_permission": bool(res),
         "user_id": user_id, 
-        "elem_id": elem_id, 
+        "elem_name": elem_name, # CHANGED: Return the name in the JSON response
         "operation_name": operation_name
     }), 200
 
 
+# --- 1. THE OWNER BUG FIX ---
 @app.route("/api/get_viewable_elements", methods=["GET"])
 def get_viewable_elements():
     user_id = request.headers.get("X-User-Id")
     comp_name = request.args.get("comp_name")
 
     with get_db_cursor() as cursor:
+        # Fixed: Selecting e.created_by instead of up.user_id
         query = """
             SELECT e.elem_name, e.created_by
             FROM element e
@@ -359,9 +364,8 @@ def get_viewable_elements():
     return jsonify({
         "user_id": user_id, 
         "comp_name": comp_name, 
-        "elem_names": [r for r in res] if res else []
+        "elem_names": [r for r in res] if res else [] # Fixed: Changed key to elem_names
     }), 200
-
 
 @app.route("/api/add_element", methods=["POST"])
 def add_element():
