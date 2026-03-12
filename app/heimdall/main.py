@@ -247,22 +247,57 @@ def api_get_experiment_by_name():
 
     return jsonify(res)
 
-@app.route("/api/experiments/delete", methods=["POST"])
 def api_delete_experiment():
+    user_id = request.headers.get("X-User-Id")
     data = request.json or {}
     experiment_id = data.get("experiment_id")
+    
     if not experiment_id:
         return jsonify({"error": "'experiment_id' is required"}), 400
+        
+    # --- 1. Preparation: Fetch Name (Decoupled ID Rule) ---
+    exp_name = get_exp_name_from_id(experiment_id)
+    if not exp_name:
+        return jsonify({"error": "Experiment Not Found"}), 404
+
+    # --- 2. Permission Check Phase (From Diagram) ---
+    # The diagram requires "manage" access for soft deletion
+    allowed, err_res, status = check_permission(user_id, exp_name, "manage", "experiment")
+    if not allowed:
+        # Returning the exact error string from the break block in the diagram
+        return jsonify({"error": "Unauthorized to manage this experiment"}), 403
+
+    # --- 3. Soft Deletion Phase (From Diagram) ---
+    # Calls MLflow to update lifecycle_stage from 'active' to 'deleted'
     res = fn.delete_experiment(experiment_id)
+    
     return jsonify(res)
 
 @app.route("/api/experiments/restore", methods=["POST"])
 def api_restore_experiment():
+    user_id = request.headers.get("X-User-Id")
     data = request.json or {}
     experiment_id = data.get("experiment_id")
+    
     if not experiment_id:
         return jsonify({"error": "'experiment_id' is required"}), 400
+        
+    # --- 1. Preparation: Fetch Name (Decoupled ID Rule) ---
+    exp_name = get_exp_name_from_id(experiment_id)
+    if not exp_name:
+        return jsonify({"error": "Experiment Not Found"}), 404
+
+    # --- 2. Permission Check Phase (From Diagram) ---
+    # The diagram requires "manage" access to restore
+    allowed, err_res, status = check_permission(user_id, exp_name, "manage", "experiment")
+    if not allowed:
+        # Returning the exact error string from the break block
+        return jsonify({"error": "Unauthorized to manage/restore this experiment"}), 403
+
+    # --- 3. Restore Phase (From Diagram) ---
+    # Calls MLflow to update lifecycle_stage from 'deleted' to 'active'
     res = fn.restore_experiment(experiment_id)
+    
     return jsonify(res)
 
 @app.route("/api/experiments/update", methods=["POST"])
@@ -337,6 +372,65 @@ def api_delete_experiment_tag():
         
     res = fn.delete_experiment_tag(experiment_id, key)
     return jsonify(res)
+
+@app.route("/api/experiments/share", methods=["POST"])
+def api_share_experiment():
+    user_id = request.headers.get("X-User-Id")
+    data = request.json or {}
+    experiment_id = data.get("experiment_id")
+    targets = data.get("targets", [])  # Expecting a list of target user IDs
+    permission_level = data.get("permission_level") # e.g., "view", "edit", "manage"
+    
+    if not experiment_id or not targets or not permission_level:
+        return jsonify({"error": "'experiment_id', 'targets', and 'permission_level' are required"}), 400
+
+    # --- 1. Preparation: Fetch Name (Decoupled ID Rule) ---
+    exp_name = get_exp_name_from_id(experiment_id)
+    if not exp_name:
+        return jsonify({"error": "Experiment Not Found"}), 404
+
+    # --- 2. Permission Check Phase (From Diagram) ---
+    # The diagram explicitly requires 'manage' access to share an experiment
+    allowed, err_res, status = check_permission(user_id, exp_name, "manage", "experiment")
+    if not allowed:
+        # Returning the exact error string from the break block
+        return jsonify({"error": "Only users with manage permission can share"}), 403
+
+    # --- 3. Access Granting Phase (From Diagram) ---
+    # Call Cerberus to update the permission records for each target
+    success_list = []
+    error_list = []
+    
+    for target_user_id in targets:
+        try:
+            cerb_res = requests.post(
+                "http://ml-studio-web-1:5000/api/edit_user_permission",
+                json={
+                    "user_id": target_user_id,     # The user receiving access
+                    "elem_name": exp_name,         # The unique experiment name
+                    "comp_name": "experiment",     # The ambiguity fix
+                    "operation_name": permission_level
+                },
+                headers={"X-User-Id": str(user_id)}, # The user granting access
+                timeout=5
+            )
+            
+            if cerb_res.status_code == 200:
+                success_list.append(target_user_id)
+            else:
+                error_list.append({"target": target_user_id, "error": cerb_res.json()})
+        except Exception as e:
+            error_list.append({"target": target_user_id, "error": str(e)})
+
+    # Return success or partial success if some targets failed
+    if error_list:
+        return jsonify({
+            "message": "Sharing completed with some errors", 
+            "successes": success_list, 
+            "errors": error_list
+        }), 207
+
+    return jsonify({"message": "Sharing successful"}), 200
 
 # =========================
 # Runs API
