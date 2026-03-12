@@ -8,6 +8,43 @@ app = Flask(__name__)
 CORS(app)
 
 # =========================
+# GLOBAL SECURITY HELPERS 
+# =========================
+
+def get_exp_name_from_id(experiment_id):
+    """Fetches the experiment name from MLflow using the ID."""
+    res = fn.get_experiment(experiment_id)
+    if "experiment" in res:
+        return res["experiment"].get("name")
+    return None
+
+def check_permission(user_id, elem_name, operation_name, comp_name):
+    """
+    Asks Cerberus if the user has permission for this element.
+    Includes comp_name to resolve ambiguity (experiment vs model)[cite: 14, 35].
+    """
+    if not user_id or not elem_name or not comp_name:
+        return False, jsonify({"error": "Missing user, element, or component data"}), 400
+        
+    try:
+        perm_res = requests.get(
+            "http://ml-studio-web-1:5000/api/user_permission",
+            params={
+                "elem_name": elem_name, 
+                "operation_name": operation_name,
+                "comp_name": comp_name # NEW: Ambiguity fix from Mar 11 meeting [cite: 35, 46]
+            },
+            headers={"X-User-Id": str(user_id)},
+            timeout=5
+        )
+        if perm_res.status_code == 200 and perm_res.json().get("has_permission", False):
+            return True, None, 200
+            
+        return False, jsonify({"error": f"Unauthorized to {operation_name} this {comp_name}"}), 403
+    except Exception as e:
+        return False, jsonify({"error": "Authorization service unavailable"}), 500
+ 
+# =========================
 # Basic
 # =========================
 
@@ -23,6 +60,8 @@ def index():
 def hello():
     return jsonify({"data": "Hello from ML Studio!"})
 
+
+
 # =========================
 # Experiments
 # =========================
@@ -35,44 +74,53 @@ def api_create_experiment():
 
     data = request.json or {}
     name = data.get("name")
-    artifact_location = data.get("artifact_location")
-    tags = data.get("tags")
     
     if not name:
         return jsonify({"error": "'name' is required"}), 400
         
-    # 1. Checking if asset is an experiment (from Sequence Diagram)
+    # 1. Check if experiment exists (including soft-deleted)
     existing_exp = fn.get_experiment_by_name(name)
     
-    # 2. Handle Name Collisions
     if "experiment" in existing_exp:
         exp_info = existing_exp["experiment"]
         if exp_info.get("lifecycle_stage") == "deleted":
-            # "Delete old experiment (trash)" -> Rename it to free up the name
-            trash_name = f"{name}_trash_{int(time.time())}"
-            fn.update_experiment(exp_info["experiment_id"], trash_name)
+            # --- THE OWNER CHECK ---
+            viewable_res = requests.get(
+                "http://ml-studio-web-1:5000/api/get_viewable_elements?comp_name=experiment", 
+                headers={"X-User-Id": str(user_id)}, timeout=5
+            )
+            elem_data = viewable_res.json().get("elem_names", [])
+            dict_elem_owners = {k: v for k, v in elem_data}
+            owner_id = dict_elem_owners.get(name)
+
+            if str(owner_id) != str(user_id):
+                return jsonify({"error": "A deleted experiment with this name exists, but you are not the owner."}), 403
+
+            # --- THE REAL HARD DELETION FIX ---
+            # 1. Physically delete it from MLflow
+            fn.hard_delete_experiment(exp_info["experiment_id"])
+            
+            # 2. Tell Cerberus to wipe the old permissions so we have a clean slate
+            requests.post(
+                "http://ml-studio-web-1:5000/api/delete_element", 
+                json={"elem_name": name, "comp_name": "experiment"},
+                headers={"X-User-Id": str(user_id)}, timeout=5
+            )
         else:
             return jsonify({"error": f"Experiment '{name}' already exists and is active."}), 400
 
-    # 3. Create & Update asset data (MLflow)
-    res = fn.create_experiment(name, artifact_location, tags)
+    # 3. Create the brand new experiment
+    res = fn.create_experiment(name, data.get("artifact_location"), data.get("tags"))
     
-    if "error_code" in res:
-        return jsonify(res), 400
-        
-    # 4. Insert Table (Cerberus Integration)
+    # 4. Register new ownership in Cerberus
     if "experiment_id" in res:
         try:
-            cerb_res = requests.post(
+            requests.post(
                 "http://ml-studio-web-1:5000/api/add_element", 
-                json={
-                    "component_name": "experiment",
-                    "elem_name": name
-                },
+                json={"component_name": "experiment", "elem_name": name},
                 headers={"X-User-Id": str(user_id)},
                 timeout=5
             )
-            cerb_res.raise_for_status()
         except Exception as e:
             print(f"Warning: Failed to sync ownership with Cerberus: {e}")
 
@@ -86,8 +134,8 @@ def api_search_experiments():
 
     # 1. Fetch viewable elements
     res = requests.get(
-            "http://ml-studio-web-1:5000/api/get_viewable_elements?comp_name=experiment", 
-            headers={"X-User-Id": user_id}, 
+            "http://ml-studio-web-1:5000/api/get_viewable_elements?comp_name=experiment",
+            headers={"X-User-Id": user_id},
             timeout=5
         )
     res.raise_for_status()
@@ -227,34 +275,22 @@ def api_update_experiment():
     if not experiment_id or not new_name:
         return jsonify({"error": "'experiment_id' and 'new_name' are required"}), 400
         
-    # --- 1. Fetch Current Name (needed for Cerberus) ---
     res_current = fn.get_experiment(experiment_id)
     if "experiment" not in res_current:
         return jsonify({"error": "Experiment Not Found"}), 404
         
     current_name = res_current["experiment"]["name"]
     
-    # --- 2. Permission Check Phase ---
-    try:
-        perm_res = requests.get(
-            "http://ml-studio-web-1:5000/api/user_permission",
-            params={"elem_name": current_name, "operation_name": "edit"},
-            headers={"X-User-Id": str(user_id)},
-            timeout=5
-        )
-        if not perm_res.json().get("has_permission", False):
-            return jsonify({"error": "Unauthorized to edit this experiment"}), 403
-    except Exception:
-        return jsonify({"error": "Authorization service unavailable"}), 500
+    # --- AMBIGUITY FIX: Added "experiment" ---
+    allowed, err_res, status = check_permission(user_id, current_name, "edit", "experiment")
+    if not allowed:
+        return jsonify({"error": "Unauthorized to edit this experiment"}), 403
 
-    # --- 3. Validation Phase ---
     existing_check = fn.get_experiment_by_name(new_name)
     if "experiment" in existing_check:
         return jsonify({"error": "The new experiment name must be globally unique"}), 400
         
-    # --- 4. Rename Phase ---
     res = fn.update_experiment(experiment_id, new_name)
-    
     return jsonify(res)
 
 @app.route("/api/experiments/set-tag", methods=["POST"])
@@ -268,19 +304,16 @@ def api_set_experiment_tag():
     if not experiment_id or not key or value is None:
         return jsonify({"error": "'experiment_id', 'key', and 'value' are required"}), 400
         
-    # --- 1. Preparation: Fetch Name (Decoupled ID Rule) ---
     exp_name = get_exp_name_from_id(experiment_id)
     if not exp_name:
         return jsonify({"error": "Experiment Not Found"}), 404
         
-    # --- 2. Permission Check Phase ---
-    allowed, err_res, status = check_permission(user_id, exp_name, "edit")
+    # --- AMBIGUITY FIX: Added "experiment" ---
+    allowed, err_res, status = check_permission(user_id, exp_name, "edit", "experiment")
     if not allowed:
         return jsonify({"error": "Unauthorized to edit this experiment"}), 403
         
-    # --- 3. Tag Upsert Phase ---
     res = fn.set_experiment_tag(experiment_id, key, value)
-    
     return jsonify(res)
 
 @app.route("/api/experiments/delete-tag", methods=["POST"])
@@ -293,22 +326,16 @@ def api_delete_experiment_tag():
     if not experiment_id or not key:
         return jsonify({"error": "'experiment_id' and 'key' are required"}), 400
         
-    # --- 1. Preparation: Fetch Name (Decoupled ID Rule) ---
     exp_name = get_exp_name_from_id(experiment_id)
     if not exp_name:
         return jsonify({"error": "Experiment Not Found"}), 404
         
-    # --- 2. Permission Check Phase ---
-    # As per diagram: Requires 'edit' access to the experiment
-    allowed, err_res, status = check_permission(user_id, exp_name, "edit")
+    # --- AMBIGUITY FIX: Added "experiment" ---
+    allowed, err_res, status = check_permission(user_id, exp_name, "edit", "experiment")
     if not allowed:
-        # Custom error message to match the "Permission Denied" break block
         return jsonify({"error": "Unauthorized to edit this experiment"}), 403
         
-    # --- 3. Tag Deletion Phase ---
-    # Calls MLflow to delete the tag
     res = fn.delete_experiment_tag(experiment_id, key)
-    
     return jsonify(res)
 
 # =========================
@@ -423,10 +450,17 @@ def api_create_registered_model():
 
 @app.route("/api/models/get", methods=["GET"])
 def api_get_registered_model():
+    user_id = request.headers.get("X-User-Id")
     name = request.args.get("name")
+    
     if not name:
         return jsonify({"error": "'name' is required"}), 400
     
+    # NEW: Ambiguity check for Models
+    allowed, err_res, status = check_permission(user_id, name, "view", "model")
+    if not allowed:
+        return err_res, status
+
     res = fn.get_registered_model(name)
     return jsonify(res)
 

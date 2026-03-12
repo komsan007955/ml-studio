@@ -317,27 +317,32 @@ def index():
 @app.route("/api/user_permission", methods=["GET"])
 def get_user_permission():
     user_id = request.headers.get("X-User-Id")
-    # CHANGED: We now ask Heimdall for the 'elem_name' instead of 'elem_id'
     elem_name = request.args.get("elem_name") 
     operation_name = request.args.get("operation_name")
+    comp_name = request.args.get("comp_name") # NEW: Ambiguity fix
+
+    if not all([user_id, elem_name, operation_name, comp_name]):
+        return jsonify({"error": "Missing required parameters"}), 400
 
     with get_db_cursor() as cursor:
-        # CHANGED: Added the JOIN to the element table so we can filter by name
+        # NEW: Joined component table to filter by comp_name
         query = """
             SELECT op.name
             FROM permission p
             INNER JOIN user_permission up ON p.id = up.permission_id
             INNER JOIN operation op ON p.operation_id = op.id
             INNER JOIN element e ON p.elem_id = e.id
-            WHERE up.user_id = %s AND e.elem_name = %s AND op.name = %s;
+            INNER JOIN component c ON e.component_id = c.id
+            WHERE up.user_id = %s AND e.elem_name = %s AND op.name = %s AND c.name = %s;
         """
-        cursor.execute(query, (user_id, elem_name, operation_name))
+        cursor.execute(query, (user_id, elem_name, operation_name, comp_name))
         res = cursor.fetchone()
 
     return jsonify({
         "has_permission": bool(res),
         "user_id": user_id, 
-        "elem_name": elem_name, # CHANGED: Return the name in the JSON response
+        "elem_name": elem_name, 
+        "comp_name": comp_name,
         "operation_name": operation_name
     }), 200
 
@@ -404,13 +409,31 @@ def edit_user_permission():
     user_id_assign = request.headers.get("X-User-Id")
     data = request.json or {}
     user_id_grant = data.get("user_id")
-    elem_id = data.get("elem_id")
+    
+    # CHANGED: Accept names, not IDs
+    elem_name = data.get("elem_name")
+    comp_name = data.get("comp_name")
     operation_name = data.get("operation_name")
 
-    if not user_id_grant or not elem_id:
-        return jsonify({"error": "'user_id' and 'elem_name' are required"}), 400
+    if not user_id_grant or not elem_name or not comp_name:
+        return jsonify({"error": "'user_id', 'elem_name', and 'comp_name' are required"}), 400
     
-    # view highest permission the granting user has to the asset
+    # --- TRANSLATOR STEP: Find the internal elem_id ---
+    with get_db_cursor() as cursor:
+        lookup_query = """
+            SELECT e.id FROM element e 
+            INNER JOIN component c ON e.component_id = c.id 
+            WHERE e.elem_name = %s AND c.name = %s;
+        """
+        cursor.execute(lookup_query, (elem_name, comp_name))
+        elem_row = cursor.fetchone()
+        
+    if not elem_row:
+        return jsonify({"error": f"{comp_name} '{elem_name}' not found"}), 404
+        
+    elem_id = elem_row[0]
+    
+    # --- EXISTING LOGIC REMAINS THE SAME BELOW ---
     with get_db_cursor() as cursor:
         query = """
             SELECT op.name 
@@ -421,23 +444,19 @@ def edit_user_permission():
             ORDER BY op.id desc
             LIMIT 1;
         """
-        
         cursor.execute(query, (user_id_grant, elem_id))
         res = cursor.fetchone()
     
     operation_name_now = res[0] if res else None
-    operation_id_now = operation_levels.index(operation_name_now)
+    operation_id_now = operation_levels.index(operation_name_now) if operation_name_now else 0
     operation_id_next = operation_levels.index(operation_name)
 
-    # if highest permission is lower than the set permission, insert user_permission rows until the highest permission = set permission.
     if operation_id_now < operation_id_next:
         permission_id = get_permission_id(elem_id, list(range(operation_id_now + 1, operation_id_next + 1)))
         user_permission_id = insert_user_permission(user_id_grant, permission_id)
-    # if highest permission is higher than the set permission, remove user_permission rows until the highest permission = set permission.
     elif operation_id_now > operation_id_next:
         permission_id = get_permission_id(elem_id, list(range(operation_id_next + 1, operation_id_now + 1)))
         user_permission_id = delete_user_permission(None, user_id_grant, permission_id)
-    # if highest permission is already equal to the set permission, do nothing
     else:
         permission_id = None
         user_permission_id = None
@@ -460,11 +479,30 @@ def edit_user_permission():
 def delete_element_api():
     user_id = request.headers.get("X-User-Id")
     data = request.json or {}
-    elem_id = data.get("elem_id")
-
-    if not elem_id:
-        return jsonify({"error": "'elem_id' is required"}), 400
     
+    # CHANGED: Accept names
+    elem_name = data.get("elem_name")
+    comp_name = data.get("comp_name")
+
+    if not elem_name or not comp_name:
+        return jsonify({"error": "'elem_name' and 'comp_name' are required"}), 400
+    
+    # --- TRANSLATOR STEP ---
+    with get_db_cursor() as cursor:
+        lookup_query = """
+            SELECT e.id FROM element e 
+            INNER JOIN component c ON e.component_id = c.id 
+            WHERE e.elem_name = %s AND c.name = %s;
+        """
+        cursor.execute(lookup_query, (elem_name, comp_name))
+        elem_row = cursor.fetchone()
+        
+    if not elem_row:
+        return jsonify({"error": f"{comp_name} '{elem_name}' not found"}), 404
+        
+    elem_id = elem_row[0]
+
+    # --- EXISTING DELETION LOGIC ---
     permission_id = get_permission_id(elem_id, None)
     user_permission_id = delete_user_permission(None, None, permission_id)
     permission_id = delete_permission(None, elem_id)
