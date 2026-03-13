@@ -418,7 +418,6 @@ def edit_user_permission():
     if not user_id_grant or not elem_name or not comp_name:
         return jsonify({"error": "'user_id', 'elem_name', and 'comp_name' are required"}), 400
     
-    # --- TRANSLATOR STEP: Find the internal elem_id ---
     with get_db_cursor() as cursor:
         lookup_query = """
             SELECT e.id FROM element e 

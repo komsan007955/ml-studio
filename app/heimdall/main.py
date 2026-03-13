@@ -68,17 +68,22 @@ def hello():
 
 @app.route("/api/experiments/create", methods=["POST"])
 def api_create_experiment():
+    # --- 1. Headers & Authentication ---
     user_id = request.headers.get("X-User-Id")
     if not user_id:
         return jsonify({"error": "Missing X-User-Id header"}), 401
 
+    # --- 2. Data Payload & Optional Fields ---
+    # Declaring all fields clearly at the top for better readability and tracking
     data = request.json or {}
     name = data.get("name")
+    artifact_location = data.get("artifact_location") # Optional
+    tags = data.get("tags") # Optional
     
     if not name:
         return jsonify({"error": "'name' is required"}), 400
         
-    # 1. Check if experiment exists (including soft-deleted)
+    # --- 3. Check if experiment exists (including soft-deleted) ---
     existing_exp = fn.get_experiment_by_name(name)
     
     if "experiment" in existing_exp:
@@ -96,23 +101,19 @@ def api_create_experiment():
             if str(owner_id) != str(user_id):
                 return jsonify({"error": "A deleted experiment with this name exists, but you are not the owner."}), 403
 
-            # --- THE REAL HARD DELETION FIX ---
-            # 1. Physically delete it from MLflow
-            fn.hard_delete_experiment(exp_info["experiment_id"])
+            # --- GOING BACK TO TEMPORARY FIX (FOR NOW) ---
+            # Reverting back to the trash rename since hard_delete_experiment is removed for now
+            trash_name = f"{name}_trash_{int(time.time())}"
+            fn.update_experiment(exp_info["experiment_id"], trash_name)
             
-            # 2. Tell Cerberus to wipe the old permissions so we have a clean slate
-            requests.post(
-                "http://ml-studio-web-1:5000/api/delete_element", 
-                json={"elem_name": name, "comp_name": "experiment"},
-                headers={"X-User-Id": str(user_id)}, timeout=5
-            )
         else:
             return jsonify({"error": f"Experiment '{name}' already exists and is active."}), 400
 
-    # 3. Create the brand new experiment
-    res = fn.create_experiment(name, data.get("artifact_location"), data.get("tags"))
+    # --- 4. Create the brand new experiment ---
+    # Passing the explicitly tracked optional variables
+    res = fn.create_experiment(name, artifact_location, tags)
     
-    # 4. Register new ownership in Cerberus
+    # --- 5. Register new ownership in Cerberus ---
     if "experiment_id" in res:
         try:
             requests.post(
@@ -390,14 +391,11 @@ def api_share_experiment():
         return jsonify({"error": "Experiment Not Found"}), 404
 
     # --- 2. Permission Check Phase (From Diagram) ---
-    # The diagram explicitly requires 'manage' access to share an experiment
     allowed, err_res, status = check_permission(user_id, exp_name, "manage", "experiment")
     if not allowed:
-        # Returning the exact error string from the break block
         return jsonify({"error": "Only users with manage permission can share"}), 403
 
     # --- 3. Access Granting Phase (From Diagram) ---
-    # Call Cerberus to update the permission records for each target
     success_list = []
     error_list = []
     
@@ -406,9 +404,9 @@ def api_share_experiment():
             cerb_res = requests.post(
                 "http://ml-studio-web-1:5000/api/edit_user_permission",
                 json={
-                    "user_id": target_user_id,     # The user receiving access
-                    "elem_name": exp_name,         # The unique experiment name
-                    "comp_name": "experiment",     # The ambiguity fix
+                    "user_id": target_user_id,     
+                    "elem_name": exp_name,         
+                    "comp_name": "experiment",    
                     "operation_name": permission_level
                 },
                 headers={"X-User-Id": str(user_id)}, # The user granting access
@@ -422,7 +420,6 @@ def api_share_experiment():
         except Exception as e:
             error_list.append({"target": target_user_id, "error": str(e)})
 
-    # Return success or partial success if some targets failed
     if error_list:
         return jsonify({
             "message": "Sharing completed with some errors", 
@@ -456,10 +453,50 @@ def api_restore_run():
 
 @app.route("/api/runs/get", methods=["GET"])
 def api_get_run():
+    # --- 1. Headers & Authentication ---
+    user_id = request.headers.get("X-User-Id")
+    if not user_id:
+        return jsonify({"error": "Missing X-User-Id header"}), 401
+
+    # --- 2. Data Payload ---
     run_id = request.args.get("run_id")
     if not run_id:
         return jsonify({"error": "'run_id' is required"}), 400
+        
+    # --- 3. Fetch Run & Identify Parent Experiment ---
+    # We must fetch the run from MLflow first to know which experiment it belongs to
     res = fn.get_run(run_id)
+    if "run" not in res:
+        return jsonify({"error": "Run Not Found"}), 404
+        
+    run_info = res["run"].get("info", {})
+    experiment_id = run_info.get("experiment_id")
+    run_lifecycle = run_info.get("lifecycle_stage", "active")
+    
+    # Decoupled ID Translator
+    exp_name = get_exp_name_from_id(experiment_id)
+    if not exp_name:
+        return jsonify({"error": "Parent Experiment Not Found"}), 404
+
+    # --- 4. Permission Check Phase ---
+    # Asking Cerberus if the user has "view" access to the parent experiment
+    allowed, err_res, status = check_permission(user_id, exp_name, "view", "experiment")
+    if not allowed:
+        return jsonify({"error": "Unauthorized to view this run"}), 403
+
+    # --- 5. Filter Phase: Soft-Deleted Privacy ---
+    if run_lifecycle == "deleted":
+        viewable_res = requests.get(
+            "http://ml-studio-web-1:5000/api/get_viewable_elements?comp_name=experiment", 
+            headers={"X-User-Id": str(user_id)}, timeout=5
+        )
+        dict_elem_owners = {k: v for k, v in viewable_res.json().get("elem_names", [])}
+        owner_id = dict_elem_owners.get(exp_name)
+        
+        # If the run is deleted and the user isn't the owner, pretend it doesn't exist
+        if str(owner_id) != str(user_id):
+            return jsonify({"error": "Run Not Found / Unauthorized"}), 404
+
     return jsonify(res)
 
 @app.route("/api/runs/set-tag", methods=["POST"])
@@ -495,19 +532,81 @@ def api_get_metric_history():
 
 @app.route("/api/runs/search", methods=["POST"])
 def api_search_runs():
+    # --- 1. Headers & Authentication ---
+    user_id = request.headers.get("X-User-Id")
+    if not user_id:
+        return jsonify({"error": "Missing X-User-Id header"}), 401
+
+    # --- 2. Data Payload & Readability Fix ---
     data = request.json or {}
-    experiment_ids = data.get("experiment_ids")
-    if not experiment_ids:
-        return jsonify({"error": "'experiment_ids' is required"}), 400
-    res = fn.search_runs(
+    experiment_ids = data.get("experiment_ids", [])
+    
+    # Explicitly declaring optional fields at the top (Komsan's requirement)
+    filter_query = data.get("filter")
+    run_view_type = data.get("run_view_type", "ACTIVE_ONLY")
+    max_results = data.get("max_results", 500)
+    order_by = data.get("order_by")
+    page_token = data.get("page_token")
+
+    if not experiment_ids or not isinstance(experiment_ids, list):
+        return jsonify({"error": "'experiment_ids' must be a provided list"}), 400
+
+    # --- 3. Permission Check Phase (From Diagram) ---
+    exp_id_to_name = {}
+    for eid in experiment_ids:
+        # Decoupled ID translation
+        ename = get_exp_name_from_id(eid)
+        if not ename:
+            return jsonify({"error": "Experiment Not Found"}), 404
+        
+        # Checking 'view' access for each requested experiment
+        allowed, err_res, status = check_permission(user_id, ename, "view", "experiment")
+        if not allowed:
+            # Exact error string from the diagram's break block
+            return jsonify({"error": "Unauthorized to view one or more of these experiments"}), 403
+            
+        # Cache the name for the filter phase later
+        exp_id_to_name[eid] = ename
+
+    # --- 4. Search Runs Phase (From Diagram) ---
+    res_mlflow = fn.search_runs(
         experiment_ids=experiment_ids,
-        filter=data.get("filter"),
-        run_view_type=data.get("run_view_type", "ACTIVE_ONLY"),
-        max_results=data.get("max_results", 500),
-        order_by=data.get("order_by"),
-        page_token=data.get("page_token")
+        filter=filter_query,
+        run_view_type=run_view_type,
+        max_results=max_results,
+        order_by=order_by,
+        page_token=page_token
     )
-    return jsonify(res)
+
+    # --- 5. Filter Phase: Soft-Deleted Privacy (From Diagram) ---
+    # Fetch owners from Cerberus to check against the requesting user
+    viewable_res = requests.get(
+        "http://ml-studio-web-1:5000/api/get_viewable_elements?comp_name=experiment", 
+        headers={"X-User-Id": str(user_id)}, timeout=5
+    )
+    dict_elem_owners = {k: v for k, v in viewable_res.json().get("elem_names", [])}
+
+    runs = res_mlflow.get("runs", [])
+    filtered_runs = []
+    
+    for run in runs:
+        # Extract run info safely
+        run_info = run.get("info", {})
+        lifecycle_stage = run_info.get("lifecycle_stage", "active")
+        run_exp_id = run_info.get("experiment_id")
+        
+        # Look up who owns the experiment this run belongs to
+        run_exp_name = exp_id_to_name.get(run_exp_id)
+        owner_id = dict_elem_owners.get(run_exp_name)
+
+        # "Filter out soft-deleted runs where owner != user"
+        if lifecycle_stage == "deleted" and str(owner_id) != str(user_id):
+            continue
+            
+        filtered_runs.append(run)
+
+    res_mlflow["runs"] = filtered_runs
+    return jsonify(res_mlflow)
 
 @app.route("/api/runs/update", methods=["POST"])
 def api_update_run():
